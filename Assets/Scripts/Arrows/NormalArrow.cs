@@ -4,7 +4,7 @@ public class NormalArrow : BaseArrow
 {
     private void Update()
     {
-        transform.Translate(Vector3.forward * speed * Time.deltaTime);
+        transform.position += moveDir * speed * Time.deltaTime;
         CheckRange();
     }
 

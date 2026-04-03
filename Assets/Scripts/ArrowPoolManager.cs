@@ -13,7 +13,7 @@ public class ArrowPoolManager : MonoBehaviour
     {
         for (int i = 0; i < poolSize; i++)
         {
-            var arrowObj = Instantiate(arrowPrefab, transform);
+            var arrowObj = Instantiate(arrowPrefab);
             arrowObj.SetActive(false);
             var arrow = arrowObj.GetComponent<BaseArrow>();
 
@@ -23,7 +23,7 @@ public class ArrowPoolManager : MonoBehaviour
         }
     }
 
-    public void FireArrow(float speed, float range)
+    public void FireArrow(float speed, float range, Vector3? targetPos = null)
     {
         if (_arrowPool.Count == 0) return;
 
@@ -32,7 +32,7 @@ public class ArrowPoolManager : MonoBehaviour
         arrow.transform.position = firePoint.position;
         arrow.transform.rotation = firePoint.rotation;
 
-        arrow.Launch(speed, range);
+        arrow.Launch(speed, range, targetPos);
     }
 
     private void RecycleArrow(BaseArrow arrow)

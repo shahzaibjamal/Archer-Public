@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float _rangedAnimClipDuration = 1f; // Length of the shooting anim
     [SerializeField] private float _meleeAnimClipDuration = 1f; // Length of the melee anim
     private float _attackTimer;
+    private float _directionParam = 1f;
     private bool _hasFiredInCurrentCycle = true;
     private List<Enemy> _enemiesInScene = new List<Enemy>();
     private Enemy _currentTarget;
@@ -73,32 +74,33 @@ public class PlayerController : MonoBehaviour
     {
         _attackTimer += Time.deltaTime;
 
-        // The animation needs to compress so it finishes BEFORE the attack interval ends, leaving room for _cooldown
-        float timeForAnim = Mathf.Max(0.01f, _attackInterval - _cooldown);
+        // The animation natively spans the entire _attackInterval
+        float timeForAnim = Mathf.Max(0.01f, _attackInterval);
         float rangedSpeedMult = _rangedAnimClipDuration / timeForAnim;
         float meleeSpeedMult = _meleeAnimClipDuration / timeForAnim;
 
         _animator.SetFloat("RangedAnimSpeed", rangedSpeedMult);
         _animator.SetFloat("MeleeAnimSpeed", meleeSpeedMult);
 
-        // Calculate exactly when the arrow spawns in our compressed runtime physics
         float scaledFireTime = _rangedFireTime / rangedSpeedMult;
+        float totalCycleTime = _attackInterval + _cooldown;
 
-        // 1. Check if we have a delayed arrow to fire during the current animation
+        // 1. Fire delayed arrow during current attack interval
         if (!_hasFiredInCurrentCycle && _attackTimer >= scaledFireTime)
         {
             if (_arrowPoolManager != null)
             {
-                // The arrow has EXACTLY the remaining time in the interval to travel all the way to LockOnRadius
+                // The arrow reaches max range exactly at the end of _attackInterval
                 float flightTimeAvailable = _attackInterval - scaledFireTime;
                 float calculatedArrowSpeed = flightTimeAvailable > 0.01f ? _lockOnRadius / flightTimeAvailable : _lockOnRadius;
-                _arrowPoolManager.FireArrow(calculatedArrowSpeed, _lockOnRadius);
+                Vector3? tgtPos = _currentTarget != null ? _currentTarget.transform.position : (Vector3?)null;
+                _arrowPoolManager.FireArrow(calculatedArrowSpeed, _lockOnRadius, tgtPos);
             }
             _hasFiredInCurrentCycle = true;
         }
         
-        // 2. Start a new attack cycle if the interval has passed
-        if (_currentTarget != null && _attackTimer >= _attackInterval)
+        // 2. Start new attack cycle after full (interval + cooldown) elapsed
+        if (_currentTarget != null && _attackTimer >= totalCycleTime)
         {
             float sqrDist = (transform.position - _currentTarget.transform.position).sqrMagnitude;
             
@@ -106,13 +108,13 @@ public class PlayerController : MonoBehaviour
             {
                 PlayAttack("MeleeAttack");
                 _attackTimer = 0f;
-                _hasFiredInCurrentCycle = true; // Melee doesn't fire arrows
+                _hasFiredInCurrentCycle = true;
             }
             else if (sqrDist <= _lockOnRadius * _lockOnRadius)
             {
                 PlayAttack("Attack");
                 _attackTimer = 0f;
-                _hasFiredInCurrentCycle = false; // Queue an arrow to formally fire at the delayed offset
+                _hasFiredInCurrentCycle = false;
             }
         }
     }
@@ -176,15 +178,20 @@ public class PlayerController : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * _rotationSpeed);
         }
 
-        // Handle backwards movement relative to facing direction
-        float direction = 1f;
+        // Handle backwards movement relative to facing direction with anti-jitter hysteresis
+        float targetDirection = 1f;
         if (_currentTarget != null && move.sqrMagnitude > 0.01f)
         {
             float dotProduct = Vector3.Dot(transform.forward, move.normalized);
-            if (dotProduct < -0.1f) direction = -1f;
+            // Require a strictly stronger threshold to switch to backwards logic
+            if (_directionParam == 1f && dotProduct < -0.2f) targetDirection = -1f;
+            // Prevent it from immediately flipping back unless they turn heavily forward again!
+            else if (_directionParam == -1f && dotProduct < 0f) targetDirection = -1f;
         }
+        _directionParam = targetDirection;
+        
         _animator.SetFloat("Speed", animSpeed);
-        _animator.SetFloat("Direction", direction);
+        _animator.SetFloat("Direction", _directionParam);
     }
 
     private void PlayAttack(string triggerName)
