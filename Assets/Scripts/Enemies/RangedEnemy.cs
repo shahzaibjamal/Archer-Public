@@ -5,6 +5,7 @@ public class RangedEnemy : Enemy
     [Header("Ranged Mechanics")]
     [SerializeField] private Transform firePoint;
     [SerializeField] private float shootInterval = 2.5f;
+    [SerializeField] private float shootHitDelay = 0.4f;
     private float _shootTimer;
 
     protected override void BehaviorUpdate()
@@ -30,8 +31,9 @@ public class RangedEnemy : Enemy
         _shootTimer -= Time.deltaTime;
         if (_shootTimer <= 0 && dist <= attackRange)
         {
-            Shoot();
+            if (animator != null) animator.SetTrigger("Attack01");
             _shootTimer = shootInterval;
+            LockAttackState(1f, shootHitDelay, Shoot); // Halts FSM stagger states gracefully while securely scheduling arrow payload 
         }
     }
 

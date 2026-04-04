@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour, IDamageable
 {
     public InputSystem_Actions _actions;
+    [SerializeField] private FloatingJoystick _floatingJoystick;
     private Vector2 _moveInput;
     private Animator _animator;
     private CharacterController _controller;
@@ -71,6 +72,13 @@ public class PlayerController : MonoBehaviour, IDamageable
     private void Update()
     {
         _moveInput = _actions.Player.Move.ReadValue<Vector2>();
+
+        // Seamless execution overlay allowing Touch Joystick structures to cleanly override base Keyboard payloads dynamically!
+        if (_floatingJoystick != null && _floatingJoystick.Direction.sqrMagnitude > 0.01f)
+        {
+            _moveInput = _floatingJoystick.Direction;
+        }
+
         UpdateTargeting();
         Move();
         AutoAttack();

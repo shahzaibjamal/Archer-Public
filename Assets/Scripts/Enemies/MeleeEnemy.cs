@@ -2,6 +2,11 @@ using UnityEngine;
 
 public class MeleeEnemy : Enemy
 {
+    [Header("Melee Combat")]
+    [SerializeField] private float attackCooldown = 1.5f;
+    [SerializeField] private float attackHitDelay = 0.5f;
+    private float _attackTimer;
+
     protected override void Start()
     {
         base.Start();
@@ -24,6 +29,23 @@ public class MeleeEnemy : Enemy
         {
             // Within strike range! Turn to face but do not MoveTowards physically into them!
             transform.LookAt(flatTargetPos);
+            
+            _attackTimer -= Time.deltaTime;
+            if (_attackTimer <= 0)
+            {
+                if (animator != null) animator.SetTrigger(Random.value > 0.5f ? "Attack01" : "Attack02");
+                _attackTimer = attackCooldown;
+                LockAttackState(1f, attackHitDelay, () => {
+                    // Deal damage natively to the player!
+                    if (playerTarget != null && Vector3.Distance(transform.position, playerTarget.position) <= attackRange * 1.5f)
+                    {
+                        if (playerTarget.TryGetComponent<IDamageable>(out var dmg))
+                        {
+                            dmg.TakeDamage(damage);
+                        }
+                    }
+                }); // Formally halts FSM natively preventing hit stagger disruptions while locking payload!
+            }
         }
     }
 }

@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System;
 using Random = UnityEngine.Random;
 
-public enum EnemyState { Idle, Patrol, Combat, UsingAbility }
+public enum EnemyState { Idle, Patrol, Combat, UsingAbility, Hit, Stunned, Attacking }
 
 public abstract class Enemy : MonoBehaviour, IDamageable
 {
+    [Header("Components")]
+    [SerializeField] protected Animator animator;
+
     [Header("Base Stats")]
     [SerializeField] protected float maxHealth = 30f;
     [SerializeField] protected float currentHealth;
@@ -21,19 +24,33 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     [SerializeField] protected float patrolRange = 5f;
     [SerializeField] protected float abilityCheckInterval = 1.5f;
 
+    [Header("Hit / Stun Dynamics")]
+    [SerializeField] protected float hitStunDuration = 0.5f;
+    [SerializeField] protected float stunDuration = 2f;
+    [SerializeField] protected int hitsToStun = 3;
+    
     protected EnemyState currentState = EnemyState.Idle;
     protected float stateTimer;
     protected Vector3 patrolTargetPos;
 
     protected Transform playerTarget;
     private EnemyAbility[] equippedAbilities;
+    protected EnemyAbility activeAbility;
     protected int rewardGold;
+    private Vector3 _lastPosition;
+    private int _hitsTaken = 0;
+    
+    protected Action pendingAttackAction;
+    protected float attackActionTimer;
 
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;
+    public Animator EnemyAnimator => animator;
     public Action<float, float> OnHealthChanged;
+
     protected virtual void Start()
     {
+        _lastPosition = transform.position;
         currentHealth = maxHealth;
         equippedAbilities = GetComponents<EnemyAbility>();
 
@@ -48,26 +65,23 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         if (currentHealth <= 0) return;
 
-        // Force rigid Y offset for generic capsule placeholders strictly mathematically
         transform.position = new Vector3(transform.position.x, visualYOffset, transform.position.z);
+
+        float currentSpeed = (transform.position - _lastPosition).magnitude / Time.deltaTime;
+        _lastPosition = transform.position;
+        if (animator != null) animator.SetFloat("Speed", currentSpeed);
 
         UpdateCooldowns();
 
-        // Standard Finite State Machine routing
         switch (currentState)
         {
-            case EnemyState.Idle:
-                HandleIdle();
-                break;
-            case EnemyState.Patrol:
-                HandlePatrol();
-                break;
-            case EnemyState.Combat:
-                HandleCombat();
-                break;
-            case EnemyState.UsingAbility:
-                HandleAbility();
-                break;
+            case EnemyState.Idle: HandleIdle(); break;
+            case EnemyState.Patrol: HandlePatrol(); break;
+            case EnemyState.Combat: HandleCombat(); break;
+            case EnemyState.UsingAbility: HandleAbility(); break;
+            case EnemyState.Hit: HandleHitStun(); break;
+            case EnemyState.Stunned: HandleStun(); break;
+            case EnemyState.Attacking: HandleAttacking(); break;
         }
     }
 
@@ -78,14 +92,23 @@ public abstract class Enemy : MonoBehaviour, IDamageable
             ability.TickCooldown(Time.deltaTime);
     }
 
+    public void LockAttackState(float duration, float hitDelay = 0f, Action onHit = null)
+    {
+        // Enforces animation lock so they cannot be natively knocked out of their Attack state by generic arrows
+        stateTimer = duration;
+        attackActionTimer = hitDelay;
+        pendingAttackAction = onHit;
+        ChangeState(EnemyState.Attacking);
+    }
+
     protected virtual void ChangeState(EnemyState newState)
     {
         currentState = newState;
 
-        if (newState == EnemyState.Idle)
-            stateTimer = baseIdleTime;
-        else if (newState == EnemyState.Combat)
-            stateTimer = abilityCheckInterval;
+        if (newState == EnemyState.Idle) stateTimer = baseIdleTime;
+        else if (newState == EnemyState.Combat) stateTimer = abilityCheckInterval;
+        else if (newState == EnemyState.Hit) stateTimer = hitStunDuration;
+        else if (newState == EnemyState.Stunned) stateTimer = stunDuration;
     }
 
     protected virtual bool CheckAggro()
@@ -106,11 +129,8 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         stateTimer -= Time.deltaTime;
         if (stateTimer <= 0)
         {
-            Debug.LogError("HandleIdle - " + transform.position);
-
             Vector2 randomDir = Random.insideUnitCircle * patrolRange;
             patrolTargetPos = transform.position + new Vector3(randomDir.x, 0, randomDir.y);
-            Debug.LogError("patrol - " + patrolTargetPos);
             ChangeState(EnemyState.Patrol);
         }
     }
@@ -122,8 +142,6 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         float dist = Vector3.Distance(transform.position, patrolTargetPos);
         if (dist > 0.5f)
         {
-            Debug.LogError("HandlePatrol - " + transform.position);
-            // Move slower when patrolling
             transform.position = Vector3.MoveTowards(transform.position, patrolTargetPos, moveSpeed * 0.5f * Time.deltaTime);
             transform.LookAt(new Vector3(patrolTargetPos.x, transform.position.y, patrolTargetPos.z));
         }
@@ -135,25 +153,19 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
     protected virtual void HandleCombat()
     {
-        // Disengage if walked/pushed too far away
         if (playerTarget == null || Vector3.Distance(transform.position, playerTarget.position) > aggroRange * 1.5f)
         {
             ChangeState(EnemyState.Idle);
             return;
         }
 
-        // Pacing & Abilities
         stateTimer -= Time.deltaTime;
         if (stateTimer <= 0)
         {
             stateTimer = abilityCheckInterval;
-            if (TryRollAbility())
-            {
-                return; // Suppress normal combat behavior directly for this frame
-            }
+            if (TryRollAbility()) return;
         }
 
-        // Execution of standard subclass behavioral pathing
         BehaviorUpdate();
     }
 
@@ -167,15 +179,14 @@ public abstract class Enemy : MonoBehaviour, IDamageable
             {
                 if (Random.value <= ability.chanceToTrigger)
                 {
-                    // Lock them into Ability animation state length!
                     stateTimer = ability.executionDuration;
+                    activeAbility = ability;
                     ability.ExecuteOnStart(this);
                     ChangeState(EnemyState.UsingAbility);
                     return true;
                 }
                 else
                 {
-                    // Put it on cooldown anyway so they don't brute-force a 10% chance roll by checking every frame
                     ability.ResetCooldown();
                 }
             }
@@ -185,12 +196,42 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
     protected virtual void HandleAbility()
     {
-        // Enemy is completely busy doing ability animations/logic
+        if (activeAbility != null) activeAbility.UpdateAbility(this);
+
         stateTimer -= Time.deltaTime;
         if (stateTimer <= 0)
         {
+            activeAbility = null;
             ChangeState(EnemyState.Combat);
         }
+    }
+
+    protected virtual void HandleHitStun()
+    {
+        stateTimer -= Time.deltaTime;
+        if (stateTimer <= 0) ChangeState(EnemyState.Combat);
+    }
+
+    protected virtual void HandleStun()
+    {
+        stateTimer -= Time.deltaTime;
+        if (stateTimer <= 0) ChangeState(EnemyState.Combat);
+    }
+
+    protected virtual void HandleAttacking()
+    {
+        if (attackActionTimer > 0f)
+        {
+            attackActionTimer -= Time.deltaTime;
+            if (attackActionTimer <= 0f)
+            {
+                pendingAttackAction?.Invoke();
+                pendingAttackAction = null;
+            }
+        }
+
+        stateTimer -= Time.deltaTime;
+        if (stateTimer <= 0) ChangeState(EnemyState.Combat);
     }
 
     public void SetReward(int reward) => rewardGold = reward;
@@ -202,8 +243,37 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     public virtual void TakeDamage(float amount)
     {
         currentHealth -= amount;
-        if (currentHealth <= 0f) Die();
+        
+        if (currentHealth > 0f)
+        {
+            _hitsTaken++;
+            if (_hitsTaken >= hitsToStun)
+            {
+                _hitsTaken = 0;
+                // Force Stun regardless of whether they are in the middle of attacking!
+                if (animator != null) animator.SetTrigger("Stun");
+                ChangeState(EnemyState.Stunned);
+            }
+            else if (currentState != EnemyState.Attacking && currentState != EnemyState.UsingAbility)
+            {
+                // Standard Hit Stagger cancels generic movement completely
+                if (animator != null) animator.SetTrigger("TakeDamage");
+                ChangeState(EnemyState.Hit); 
+            }
+            
+            OnHitVFXStub();
+        }
+        else 
+        {
+            Die();
+        }
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+
+    protected virtual void OnHitVFXStub()
+    {
+        // Insert Particle Systems or Blood Splatters here!
+        // Debug.Log($"Spawned Hit VFX on {name}"); // Natively stubbed out for later FX integrations
     }
 
     public virtual void Heal(float amount)
@@ -214,7 +284,12 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
     protected virtual void Die()
     {
-        Destroy(gameObject);
+        if (animator != null) animator.SetTrigger("Death");
+
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
+        Destroy(gameObject, 3f);
     }
 
     private void OnDestroy()

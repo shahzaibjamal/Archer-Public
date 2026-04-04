@@ -4,6 +4,7 @@ public class HealerEnemy : Enemy
 {
     [SerializeField] private float healAmount = 10f;
     [SerializeField] private float healInterval = 2f;
+    [SerializeField] private float healHitDelay = 0.5f;
     private float _healTimer;
     private Enemy _currentAllyToHeal;
 
@@ -37,8 +38,11 @@ public class HealerEnemy : Enemy
         _healTimer -= Time.deltaTime;
         if (_healTimer <= 0)
         {
-            _currentAllyToHeal.Heal(healAmount);
+            if (animator != null) animator.SetTrigger("Attack01");
             _healTimer = healInterval;
+            LockAttackState(1f, healHitDelay, () => {
+                if (_currentAllyToHeal != null) _currentAllyToHeal.Heal(healAmount);
+            }); // Fully shields iteration checks securely during cast cycle 
         }
     }
 

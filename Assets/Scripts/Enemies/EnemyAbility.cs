@@ -30,4 +30,7 @@ public abstract class EnemyAbility : MonoBehaviour
     }
 
     protected abstract void Execute(Enemy user);
+
+    // Optional override for abilities that actually need to do processing/moving over time!
+    public virtual void UpdateAbility(Enemy user) {}
 }

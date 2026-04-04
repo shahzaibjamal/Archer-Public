@@ -1,9 +1,11 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class EnemyHUD : MonoBehaviour
 {
     [SerializeField] private Image healthBarFill;
+    [SerializeField] private TMP_Text healthAmount;
     [SerializeField] private Enemy targetEnemy;
 
     private Camera mainCamera;
@@ -38,6 +40,10 @@ public class EnemyHUD : MonoBehaviour
         if (healthBarFill != null)
         {
             healthBarFill.fillAmount = current / max;
+        }
+        if (healthAmount != null)
+        {
+            healthAmount.text = $"{current} / {max}";
         }
     }
 
