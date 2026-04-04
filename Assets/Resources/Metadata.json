@@ -1,0 +1,91 @@
+{
+  "PlayerStats": {
+    "MaxHealth": 100.0,
+    "MoveSpeed": 5.0,
+    "RotationSpeed": 15.0,
+    "AttackInterval": 1.0,
+    "Cooldown": 0.2,
+    "LockOnRadius": 10.0,
+    "LoseTargetRadius": 15.0,
+    "MeleeRadius": 2.0
+  },
+  "EnemyStats": [
+    {
+      "EnemyType": "Melee",
+      "MaxHealth": 30.0,
+      "MoveSpeed": 3.0,
+      "AttackRange": 2.0,
+      "AggroRange": 15.0,
+      "Damage": 10.0,
+      "BaseIdleTime": 2.0,
+      "PatrolRange": 5.0,
+      "AbilityCheckInterval": 1.5,
+      "HitsToStun": 3
+    },
+    {
+      "EnemyType": "Ranged",
+      "MaxHealth": 20.0,
+      "MoveSpeed": 2.0,
+      "AttackRange": 15.0,
+      "AggroRange": 20.0,
+      "Damage": 5.0,
+      "BaseIdleTime": 2.0,
+      "PatrolRange": 5.0,
+      "AbilityCheckInterval": 2.0,
+      "HitsToStun": 2
+    },
+    {
+      "EnemyType": "Healer",
+      "MaxHealth": 25.0,
+      "MoveSpeed": 4.0,
+      "AttackRange": 8.0,
+      "AggroRange": 15.0,
+      "Damage": 0.0,
+      "BaseIdleTime": 2.0,
+      "PatrolRange": 5.0,
+      "AbilityCheckInterval": 1.5,
+      "HitsToStun": 3
+    },
+    {
+      "EnemyType": "Tank",
+      "MaxHealth": 100.0,
+      "MoveSpeed": 1.5,
+      "AttackRange": 2.5,
+      "AggroRange": 15.0,
+      "Damage": 15.0,
+      "BaseIdleTime": 2.0,
+      "PatrolRange": 3.0,
+      "AbilityCheckInterval": 3.0,
+      "HitsToStun": 8
+    },
+    {
+      "EnemyType": "Boss",
+      "MaxHealth": 200.0,
+      "MoveSpeed": 2.0,
+      "AttackRange": 10.0,
+      "AggroRange": 25.0,
+      "Damage": 30.0,
+      "BaseIdleTime": 1.0,
+      "PatrolRange": 4.0,
+      "AbilityCheckInterval": 2.0,
+      "HitsToStun": 10
+    }
+  ],
+  "Levels": [
+    {
+      "LevelId": 1,
+      "EnemySpawns": [
+        {
+          "EnemyType": "Melee",
+          "Count": 1,
+          "RewardGold": 10
+        },
+        {
+          "EnemyType": "Ranged",
+          "Count": 1,
+          "RewardGold": 15
+        }
+      ]
+    }
+  ]
+}

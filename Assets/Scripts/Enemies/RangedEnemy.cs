@@ -3,6 +3,7 @@ using UnityEngine;
 public class RangedEnemy : Enemy
 {
     [Header("Ranged Mechanics")]
+    [SerializeField] private BaseArrow projectilePrefab;
     [SerializeField] private Transform firePoint;
     [SerializeField] private float shootInterval = 2.5f;
     [SerializeField] private float shootHitDelay = 0.4f;
@@ -39,13 +40,14 @@ public class RangedEnemy : Enemy
 
     private void Shoot()
     {
-        if (ArrowPoolManager.Instance != null)
+        if (projectilePrefab != null)
         {
             Transform fp = firePoint != null ? firePoint : transform;
             Vector3 flatTarget = new Vector3(playerTarget.position.x, fp.position.y, playerTarget.position.z);
-
-            // Fire strictly forward, letting it fly all the way to its Aggro boundary limits!
-            ArrowPoolManager.Instance.FireArrow(fp.position, fp.rotation, 15f, aggroRange, null, true);
+            
+            // Decoupled explicitly from universal ArrowManager
+            BaseArrow arrow = Instantiate(projectilePrefab, fp.position, fp.rotation);
+            arrow.Launch(15f, aggroRange, flatTarget, true);
         }
     }
 }

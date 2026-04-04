@@ -23,16 +23,16 @@ public class FloatingJoystick : MonoBehaviour, IPointerDownHandler, IPointerUpHa
     {
         ShowJoystick();
 
-        // Convert the universal screen press exactly into the root canvas local space!
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            _parentCanvas.transform as RectTransform, 
+        // Safely map the screen pixel touch directly to true physical Canvas World space natively!
+        // This completely bypasses any anchor/pivot misalignment geometry issues internally natively.
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+            GetComponent<RectTransform>(), 
             eventData.position, 
             eventData.pressEventCamera, 
-            out Vector2 localPoint
-        );
-
-        // Snap the background perfectly flush with the finger
-        background.anchoredPosition = localPoint;
+            out Vector3 worldPoint))
+        {
+            background.position = worldPoint;
+        }
         
         // Immediately trigger drag physics so it updates identically on frame 1
         OnDrag(eventData);

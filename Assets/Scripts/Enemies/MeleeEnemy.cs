@@ -5,11 +5,21 @@ public class MeleeEnemy : Enemy
     [Header("Melee Combat")]
     [SerializeField] private float attackCooldown = 1.5f;
     [SerializeField] private float attackHitDelay = 0.5f;
+    [SerializeField] private float tauntCooldown = 6f;
+    [SerializeField, Range(0f, 1f)] private float tauntChance = 0.5f;
     private float _attackTimer;
+    private float _tauntTimer;
 
     protected override void Start()
     {
         base.Start();
+        _tauntTimer = Random.Range(1f, tauntCooldown); // random initial delay
+    }
+
+    protected override void Update()
+    {
+        base.Update();
+        if (_tauntTimer > 0) _tauntTimer -= Time.deltaTime;
     }
 
     protected override void BehaviorUpdate()
@@ -22,6 +32,17 @@ public class MeleeEnemy : Enemy
 
         if (dist <= aggroRange && dist > attackRange)
         {
+            if (_tauntTimer <= 0f && currentState != EnemyState.Victory)
+            {
+                _tauntTimer = tauntCooldown;
+                if (Random.value <= tauntChance)
+                {
+                    if (animator != null) animator.SetTrigger("Taunt");
+                    ChangeState(EnemyState.Taunt);
+                    return;
+                }
+            }
+
             transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
             transform.LookAt(flatTargetPos);
         }

@@ -8,6 +8,8 @@ public class ArrowPoolManager : MonoBehaviour
     [SerializeField] private GameObject arrowPrefab;
     [SerializeField] private int poolSize = 25;
 
+    public List<BaseArrow> ActiveArrows { get; private set; } = new List<BaseArrow>();
+
     private Queue<BaseArrow> _arrowPool = new Queue<BaseArrow>();
 
     private void Awake()
@@ -41,11 +43,13 @@ public class ArrowPoolManager : MonoBehaviour
         arrow.transform.rotation = spawnRot;
 
         arrow.Launch(speed, range, targetPos, isEnemyProjectile);
+        ActiveArrows.Add(arrow);
     }
 
     private void RecycleArrow(BaseArrow arrow)
     {
         arrow.gameObject.SetActive(false);
+        ActiveArrows.Remove(arrow);
         _arrowPool.Enqueue(arrow);
     }
 }

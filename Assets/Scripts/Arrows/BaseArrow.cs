@@ -14,13 +14,13 @@ public abstract class BaseArrow : MonoBehaviour
     protected float rangeSqr;
     protected Vector3 startPos;
     protected Vector3 moveDir;
-    protected bool _isEnemyProjectile;
+    public bool IsEnemyProjectile { get; protected set; }
 
     public virtual void Launch(float speed, float range, Vector3? targetPos = null, bool isEnemyProjectile = false)
     {
         this.speed = speed;
         this.rangeSqr = range * range;
-        _isEnemyProjectile = isEnemyProjectile;
+        IsEnemyProjectile = isEnemyProjectile;
         startPos = transform.position;
 
         if (targetPos.HasValue)
@@ -43,8 +43,8 @@ public abstract class BaseArrow : MonoBehaviour
         {
             // Crucial Team/Tag cross-check constraint queried dynamically against the raw script holder properly
             bool isPlayerHit = ((MonoBehaviour)damageable).CompareTag("Player");
-            if (isPlayerHit && _isEnemyProjectile) return true;
-            if (!isPlayerHit && !_isEnemyProjectile) return true;
+            if (isPlayerHit && IsEnemyProjectile) return true;
+            if (!isPlayerHit && !IsEnemyProjectile) return true;
         }
         return false;
     }
@@ -64,6 +64,9 @@ public abstract class BaseArrow : MonoBehaviour
         if (hitVfxPrefab != null) Instantiate(hitVfxPrefab, transform.position, Quaternion.identity);
         if (hitSfx != null) AudioSource.PlayClipAtPoint(hitSfx, transform.position);
         
-        OnDespawn?.Invoke(this);
+        if (OnDespawn != null)
+            OnDespawn.Invoke(this);
+        else 
+            Destroy(gameObject);
     }
 }

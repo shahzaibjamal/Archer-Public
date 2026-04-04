@@ -49,19 +49,10 @@ public class HealerEnemy : Enemy
     private void FindAllyTarget()
     {
         if (_currentAllyToHeal != null && _currentAllyToHeal.gameObject != null) return;
-
-        Enemy[] allEnemies = FindObjectsOfType<Enemy>();
-        float closestDist = float.MaxValue;
-
-        foreach(var e in allEnemies)
+        
+        if (BattleManager.Instance != null)
         {
-            if (e == this) continue;
-            float d = Vector3.Distance(transform.position, e.transform.position);
-            if (d < closestDist && d <= aggroRange)
-            {
-                closestDist = d;
-                _currentAllyToHeal = e;
-            }
+            _currentAllyToHeal = BattleManager.Instance.GetHealTarget(this, aggroRange);
         }
     }
 }

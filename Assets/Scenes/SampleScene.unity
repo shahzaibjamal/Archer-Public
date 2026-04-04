@@ -193,13 +193,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 66044717}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -245,6 +245,7 @@ MonoBehaviour:
   _firePoint: {fileID: 1168379793}
   _rotationSpeed: 15
   _moveSpeed: 5
+  _maxHealth: 100
   _targetByMoveDirection: 1
   _lockOnRadius: 9.1
   _loseTargetRadius: 15
@@ -311,6 +312,18 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2596340084689953945, guid: a66c7697d3d1c844e82aa26243dbfb29, type: 3}
   m_PrefabInstance: {fileID: 275720717}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &234064840
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 234064833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e9b6897e20b9f94486d26b7c3743e1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimator
 --- !u!1001 &275720717
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -395,6 +408,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1320491844087027338, guid: a66c7697d3d1c844e82aa26243dbfb29, type: 3}
       insertIndex: -1
       addedObject: {fileID: 234064834}
+    - targetCorrespondingSourceObject: {fileID: 1320491844087027338, guid: a66c7697d3d1c844e82aa26243dbfb29, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 234064840}
   m_SourcePrefab: {fileID: 100100000, guid: a66c7697d3d1c844e82aa26243dbfb29, type: 3}
 --- !u!1 &330585543
 GameObject:
@@ -547,9 +563,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollowXZ
   player: {fileID: 234064838}
-  yDistance: 4.5
-  zDistance: -2.53
-  angle: 45
+  yDistance: 6.17
+  zDistance: -3.66
+  angle: 48
   smoothSpeed: 5
 --- !u!1 &393929483
 GameObject:
@@ -819,6 +835,50 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &717018868
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 717018870}
+  - component: {fileID: 717018869}
+  m_Layer: 0
+  m_Name: DataManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &717018869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 717018868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b0637d413d0b194e9bc60986c0a2f46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DataManager
+--- !u!4 &717018870
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 717018868}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &793509485
 GameObject:
   m_ObjectHideFlags: 0
@@ -1056,34 +1116,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 924003957}
-  - component: {fileID: 924003956}
+  - component: {fileID: 924003958}
   m_Layer: 0
-  m_Name: LevelManager
+  m_Name: BattleManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &924003956
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 924003955}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af3058eacccac8448a5b4f790956f8b3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LevelManager
-  meleePrefab: {fileID: 4402756469435821769, guid: 2e149578bc7dbca4094696e1f499b870, type: 3}
-  rangedPrefab: {fileID: 2740394078279330970, guid: fc5355a53af49e94db9b6ec1a12833a7, type: 3}
-  healerPrefab: {fileID: 2740394078279330970, guid: 05b32b3067093e343a7196bc4d9530ed, type: 3}
-  tankPrefab: {fileID: 2740394078279330970, guid: aad0e894739c65e4eb453391dce5f964, type: 3}
-  bossPrefab: {fileID: 2740394078279330970, guid: 8814d97d170c2f04a90e6adb0daf6eef, type: 3}
-  spawnPoints:
-  - {fileID: 1309913176}
-  - {fileID: 805346285}
+  m_IsActive: 1
 --- !u!4 &924003957
 Transform:
   m_ObjectHideFlags: 0
@@ -1099,6 +1139,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &924003958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 924003955}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b82e4138d6120604e97078f93de9ae06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleManager
+  meleePrefab: {fileID: 4402756469435821769, guid: 2e149578bc7dbca4094696e1f499b870, type: 3}
+  rangedPrefab: {fileID: 2740394078279330970, guid: fc5355a53af49e94db9b6ec1a12833a7, type: 3}
+  healerPrefab: {fileID: 2740394078279330970, guid: 05b32b3067093e343a7196bc4d9530ed, type: 3}
+  tankPrefab: {fileID: 2740394078279330970, guid: aad0e894739c65e4eb453391dce5f964, type: 3}
+  bossPrefab: {fileID: 2740394078279330970, guid: 8814d97d170c2f04a90e6adb0daf6eef, type: 3}
+  spawnPoints:
+  - {fileID: 1309913176}
+  - {fileID: 805346285}
 --- !u!1 &1072490978
 GameObject:
   m_ObjectHideFlags: 0
@@ -1150,7 +1210,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.28627452}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1256,7 +1316,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.36477977, g: 0.36477977, b: 0.36477977, a: 1}
+  m_Color: {r: 0.36477977, g: 0.36477977, b: 0.36477977, a: 0.5568628}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1405,7 +1465,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2740394078279330970, guid: fc5355a53af49e94db9b6ec1a12833a7, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2987831541745542148, guid: fc5355a53af49e94db9b6ec1a12833a7, type: 3}
       propertyPath: maxHealth
@@ -1534,3 +1594,4 @@ SceneRoots:
   - {fileID: 805346285}
   - {fileID: 793509489}
   - {fileID: 1397129214}
+  - {fileID: 717018870}

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,12 +8,15 @@ public class PlayerController : MonoBehaviour, IDamageable
     public InputSystem_Actions _actions;
     [SerializeField] private FloatingJoystick _floatingJoystick;
     private Vector2 _moveInput;
-    private Animator _animator;
+    private PlayerAnimator _playerAnim;
     private CharacterController _controller;
 
     [SerializeField] private Transform _firePoint;
     [SerializeField] private float _rotationSpeed = 15f;
     [SerializeField] private float _moveSpeed = 5f;
+    [SerializeField] private float _maxHealth = 100f;
+    private float _currentHealth;
+    private bool _isDead = false;
 
     [Header("Targeting")]
     [SerializeField] private bool _targetByMoveDirection = true;
@@ -27,7 +31,6 @@ public class PlayerController : MonoBehaviour, IDamageable
     private float _attackTimer;
     private float _directionParam = 1f;
     private bool _hasFiredInCurrentCycle = true;
-    private List<Enemy> _enemiesInScene = new List<Enemy>();
     private Enemy _currentTarget;
     private Enemy _previousTarget;
 
@@ -35,42 +38,50 @@ public class PlayerController : MonoBehaviour, IDamageable
     {
         if (_actions == null)
             _actions = new InputSystem_Actions();
-        _animator = GetComponent<Animator>();
         _controller = GetComponent<CharacterController>();
+        _playerAnim = gameObject.GetComponent<PlayerAnimator>() ?? gameObject.AddComponent<PlayerAnimator>();
     }
     private void Start()
     {
-        LevelManager.Instance.StartLevel(1);
+        // Instantly overlay JSON player stats!
+        if (DataManager.Instance != null && DataManager.Instance.Metadata != null)
+        {
+            var p = DataManager.Instance.Metadata.PlayerStats;
+            if (p != null)
+            {
+                if (p.MoveSpeed > 0) _moveSpeed = p.MoveSpeed;
+                if (p.RotationSpeed > 0) _rotationSpeed = p.RotationSpeed;
+                if (p.AttackInterval > 0) _attackInterval = p.AttackInterval;
+                if (p.Cooldown > 0) _cooldown = p.Cooldown;
+                if (p.LockOnRadius > 0) _lockOnRadius = p.LockOnRadius;
+                if (p.LoseTargetRadius > 0) _loseTargetRadius = p.LoseTargetRadius;
+                if (p.MeleeRadius > 0) _meleeRadius = p.MeleeRadius;
+                if (p.MaxHealth > 0) _maxHealth = p.MaxHealth;
+            }
+        }
+
+        _currentHealth = _maxHealth;
+
+        if (BattleManager.Instance != null)
+        {
+            BattleManager.Instance.StartLevel(1);
+        }
     }
 
     private void OnEnable()
     {
         _actions.Enable();
-        GameEvents.EnemySpawned += AddEnemy;
-        GameEvents.EnemyDestroyed += RemoveEnemy;
     }
 
     private void OnDisable()
     {
         _actions.Disable();
-        GameEvents.EnemySpawned -= AddEnemy;
-        GameEvents.EnemyDestroyed -= RemoveEnemy;
-    }
-
-    private void AddEnemy(Enemy enemy)
-    {
-        if (!_enemiesInScene.Contains(enemy))
-            _enemiesInScene.Add(enemy);
-    }
-
-    private void RemoveEnemy(Enemy enemy)
-    {
-        if (_enemiesInScene.Contains(enemy))
-            _enemiesInScene.Remove(enemy);
     }
 
     private void Update()
     {
+        if (_isDead) return;
+
         _moveInput = _actions.Player.Move.ReadValue<Vector2>();
 
         // Seamless execution overlay allowing Touch Joystick structures to cleanly override base Keyboard payloads dynamically!
@@ -93,8 +104,7 @@ public class PlayerController : MonoBehaviour, IDamageable
         float rangedSpeedMult = _rangedAnimClipDuration / timeForAnim;
         float meleeSpeedMult = _meleeAnimClipDuration / timeForAnim;
 
-        _animator.SetFloat("RangedAnimSpeed", rangedSpeedMult);
-        _animator.SetFloat("MeleeAnimSpeed", meleeSpeedMult);
+        _playerAnim.UpdateAttackRates(rangedSpeedMult, meleeSpeedMult);
 
         float scaledFireTime = _rangedFireTime / rangedSpeedMult;
         float totalCycleTime = _attackInterval + _cooldown;
@@ -173,7 +183,9 @@ public class PlayerController : MonoBehaviour, IDamageable
         float bestScore = float.MinValue;
         float closestDistanceSqr = _lockOnRadius * _lockOnRadius;
 
-        foreach (var enemy in _enemiesInScene)
+        if (BattleManager.Instance == null) return;
+
+        foreach (var enemy in BattleManager.Instance.ActiveEnemies)
         {
             if (enemy == null) continue;
 
@@ -280,19 +292,36 @@ public class PlayerController : MonoBehaviour, IDamageable
         {
             _directionParam = 0;
         }
-        _animator.SetFloat("Speed", animSpeed);
-        _animator.SetFloat("Direction", _directionParam);
+        _playerAnim.UpdateLocomotion(animSpeed, _directionParam);
     }
 
     private void PlayAttack(string triggerName)
     {
-        _animator.SetTrigger(triggerName);
+        _playerAnim.PlayAttack(triggerName);
     }
 
     public void TakeDamage(float amount)
     {
-        // Add robust HP management UI linkage here later natively!
-        Debug.Log("Player took " + amount + " damage natively from hostile entity!");
+        if (_isDead) return;
+
+        _currentHealth -= amount;
+        Debug.Log("Player took " + amount + " damage natively! Health: " + _currentHealth);
+
+        if (_currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        _isDead = true;
+        _moveInput = Vector2.zero;
+        _playerAnim.UpdateLocomotion(0, 0);
+        // Play death animation if available
+        if (TryGetComponent<Animator>(out var anim)) anim.SetTrigger("Death");
+        
+        GameEvents.TriggerPlayerDied();
     }
 
     private void OnDrawGizmos()
