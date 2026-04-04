@@ -7,6 +7,7 @@ public class RangedEnemy : Enemy
     [SerializeField] private Transform firePoint;
     [SerializeField] private float shootInterval = 2.5f;
     [SerializeField] private float shootHitDelay = 0.4f;
+    [SerializeField] private float fleeRange = 5f;
     private float _shootTimer;
 
     protected override void BehaviorUpdate()
@@ -18,15 +19,24 @@ public class RangedEnemy : Enemy
 
         if (dist > aggroRange) return;
 
-        transform.LookAt(flatTargetPos);
-
-        if (dist < attackRange - 4f)
+        if (dist < fleeRange)
         {
-            transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, -moveSpeed * Time.deltaTime);
+            // Flee: Turn away from player and run forward
+            Vector3 fleeDir = (transform.position - flatTargetPos).normalized;
+            Vector3 fleeTarget = transform.position + fleeDir * 2f;
+            transform.LookAt(new Vector3(fleeTarget.x, transform.position.y, fleeTarget.z));
+            transform.position = Vector3.MoveTowards(transform.position, fleeTarget, moveSpeed * Time.deltaTime);
         }
         else if (dist > attackRange)
         {
+            // Approach: Look at and move towards player
+            transform.LookAt(flatTargetPos);
             transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
+        }
+        else
+        {
+            // Within attack range: Stay static and just look at player
+            transform.LookAt(flatTargetPos);
         }
 
         _shootTimer -= Time.deltaTime;
@@ -40,14 +50,19 @@ public class RangedEnemy : Enemy
 
     private void Shoot()
     {
-        if (projectilePrefab != null)
+        if (projectilePrefab != null && playerTarget != null)
         {
             Transform fp = firePoint != null ? firePoint : transform;
-            Vector3 flatTarget = new Vector3(playerTarget.position.x, fp.position.y, playerTarget.position.z);
             
-            // Decoupled explicitly from universal ArrowManager
-            BaseArrow arrow = Instantiate(projectilePrefab, fp.position, fp.rotation);
-            arrow.Launch(15f, aggroRange, flatTarget, true);
+            // Force a perfectly horizontal (Y=0) launch trajectory at the firePoint's height
+            Vector3 targetFlattened = new Vector3(playerTarget.position.x, fp.position.y, playerTarget.position.z);
+            Vector3 targetDir = (targetFlattened - fp.position).normalized;
+            
+            // Set launch transform and pass non-homing target position in that horizontal direction
+            Vector3 targetPos = fp.position + targetDir * 10f;
+            
+            BaseArrow arrow = Instantiate(projectilePrefab, fp.position, Quaternion.LookRotation(targetDir));
+            arrow.Launch(15f, aggroRange, targetPos, true);
         }
     }
 }

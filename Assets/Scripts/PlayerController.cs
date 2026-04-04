@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Android.Gradle.Manifest;
 using UnityEngine;
@@ -19,6 +20,7 @@ public class PlayerController : MonoBehaviour, IDamageable
     private bool _isDead = false;
 
     [Header("Targeting")]
+    [SerializeField] private bool _isActive = true;
     [SerializeField] private bool _targetByMoveDirection = true;
     [SerializeField] private float _lockOnRadius = 10f;
     [SerializeField] private float _loseTargetRadius = 15f;
@@ -33,6 +35,9 @@ public class PlayerController : MonoBehaviour, IDamageable
     private bool _hasFiredInCurrentCycle = true;
     private Enemy _currentTarget;
     private Enemy _previousTarget;
+    public Action<float, float> OnHealthChanged;
+    public float CurrentHealth => _currentHealth;
+    public float MaxHealth => _maxHealth;
 
     private void Awake()
     {
@@ -97,6 +102,8 @@ public class PlayerController : MonoBehaviour, IDamageable
 
     private void AutoAttack()
     {
+        if (!_isActive)
+            return;
         _attackTimer += Time.deltaTime;
 
         // The animation natively spans the entire _attackInterval
@@ -306,6 +313,7 @@ public class PlayerController : MonoBehaviour, IDamageable
 
         _currentHealth -= amount;
         Debug.Log("Player took " + amount + " damage natively! Health: " + _currentHealth);
+        OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
 
         if (_currentHealth <= 0)
         {
@@ -320,7 +328,7 @@ public class PlayerController : MonoBehaviour, IDamageable
         _playerAnim.UpdateLocomotion(0, 0);
         // Play death animation if available
         if (TryGetComponent<Animator>(out var anim)) anim.SetTrigger("Death");
-        
+
         GameEvents.TriggerPlayerDied();
     }
 

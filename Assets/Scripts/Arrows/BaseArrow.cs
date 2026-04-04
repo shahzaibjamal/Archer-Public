@@ -37,12 +37,14 @@ public abstract class BaseArrow : MonoBehaviour
 
     protected bool IsValidHit(Collider other, out IDamageable damageable)
     {
-        // Query deeply up the physics tree securely in case the raw capsule collider is on a nested model wrapper!
         damageable = other.GetComponentInParent<IDamageable>();
         if (damageable != null)
         {
-            // Crucial Team/Tag cross-check constraint queried dynamically against the raw script holder properly
-            bool isPlayerHit = ((MonoBehaviour)damageable).CompareTag("Player");
+            MonoBehaviour targetMb = (MonoBehaviour)damageable;
+            
+            // Safer: Check if the IDamageable belongs to the Player by checking component presence on itself or parent
+            bool isPlayerHit = targetMb.GetComponentInParent<PlayerController>() != null || targetMb.CompareTag("Player");
+            
             if (isPlayerHit && IsEnemyProjectile) return true;
             if (!isPlayerHit && !IsEnemyProjectile) return true;
         }

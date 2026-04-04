@@ -16,7 +16,7 @@
       "MoveSpeed": 3.0,
       "AttackRange": 2.0,
       "AggroRange": 15.0,
-      "Damage": 10.0,
+      "Damage": 1.0,
       "BaseIdleTime": 2.0,
       "PatrolRange": 5.0,
       "AbilityCheckInterval": 1.5,
@@ -74,16 +74,21 @@
   "Levels": [
     {
       "LevelId": 1,
-      "EnemySpawns": [
+      "Waves": [
         {
-          "EnemyType": "Melee",
-          "Count": 1,
-          "RewardGold": 10
-        },
-        {
-          "EnemyType": "Ranged",
-          "Count": 1,
-          "RewardGold": 15
+          "PreWaveDelay": 2.0,
+          "EnemySpawns": [
+            {
+              "EnemyType": "Melee",
+              "Count": 1,
+              "RewardGold": 10
+            },
+            {
+              "EnemyType": "Ranged",
+              "Count": 1,
+              "RewardGold": 15
+            }
+          ]
         }
       ]
     }

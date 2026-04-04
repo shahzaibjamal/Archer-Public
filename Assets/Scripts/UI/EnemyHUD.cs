@@ -15,6 +15,7 @@ public class EnemyHUD : MonoBehaviour
         mainCamera = Camera.main;
         if (targetEnemy != null)
         {
+            transform.forward = mainCamera.transform.forward;
             targetEnemy.OnHealthChanged += UpdateHealthBar;
             UpdateHealthBar(targetEnemy.CurrentHealth, targetEnemy.MaxHealth);
         }
