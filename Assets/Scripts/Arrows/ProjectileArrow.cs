@@ -7,13 +7,11 @@ public class ProjectileArrow : BaseArrow
 
     private Vector3 velocity;
 
-    public override void Launch(float speed, float range, Vector3? targetPos = null)
+    public override void Launch(float speed, float range, Vector3? targetPos = null, bool isEnemyProjectile = false)
     {
-        base.Launch(speed, range, targetPos);
+        base.Launch(speed, range, targetPos, isEnemyProjectile);
 
-        // Time to travel horizontal 'range' is range/speed
         float flightTime = range / speed;
-        // Gravity to reach original Y exactly at flightTime
         float actualGravity = Mathf.Abs(Physics.gravity.y) * gravityMultiplier;
         float vy = 0.5f * actualGravity * flightTime;
         
@@ -33,14 +31,13 @@ public class ProjectileArrow : BaseArrow
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent<Enemy>(out var enemy))
+        if (IsValidHit(other, out var damageable))
         {
-            enemy.TakeDamage(damage);
+            damageable.TakeDamage(damage);
             Poof();
             return;
         }
 
-        // Check ground collision to poof
         if (((1 << other.gameObject.layer) & groundLayer) != 0)
         {
             Poof();
@@ -49,6 +46,5 @@ public class ProjectileArrow : BaseArrow
 
     protected override void OnMaxRangeReached()
     {
-        // Ignored for projectile arrow, it poofs on ground
     }
 }

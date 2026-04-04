@@ -4,9 +4,9 @@ public class PiercingArrow : BaseArrow
 {
     [SerializeField] private float overridingRange = 30f;
 
-    public override void Launch(float speed, float range, Vector3? targetPos = null)
+    public override void Launch(float speed, float range, Vector3? targetPos = null, bool isEnemyProjectile = false)
     {
-        base.Launch(speed, overridingRange, targetPos);
+        base.Launch(speed, overridingRange, targetPos, isEnemyProjectile);
     }
 
     private void Update()
@@ -17,9 +17,10 @@ public class PiercingArrow : BaseArrow
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent<Enemy>(out var enemy))
+        if (IsValidHit(other, out var damageable))
         {
-            enemy.TakeDamage(damage);
+            damageable.TakeDamage(damage);
+            // Optionally play hit effects per hit organically
             if (hitVfxPrefab != null) Instantiate(hitVfxPrefab, transform.position, Quaternion.identity);
             if (hitSfx != null) AudioSource.PlayClipAtPoint(hitSfx, transform.position);
         }

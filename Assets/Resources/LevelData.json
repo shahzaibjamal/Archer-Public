@@ -1,0 +1,44 @@
+{
+  "levels": [
+    {
+      "levelId": 1,
+      "enemySpawns": [
+        {
+          "enemyType": "Melee",
+          "count": 1,
+          "rewardGold": 10
+        },
+        {
+          "enemyType": "Ranged",
+          "count": 1,
+          "rewardGold": 15
+        }
+      ]
+    },
+    {
+      "levelId": 2,
+      "enemySpawns": [
+        {
+          "enemyType": "Tank",
+          "count": 2,
+          "rewardGold": 30
+        },
+        {
+          "enemyType": "Healer",
+          "count": 1,
+          "rewardGold": 50
+        }
+      ]
+    },
+    {
+      "levelId": 3,
+      "enemySpawns": [
+        {
+          "enemyType": "Boss",
+          "count": 1,
+          "rewardGold": 500
+        }
+      ]
+    }
+  ]
+}

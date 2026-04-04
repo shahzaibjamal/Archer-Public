@@ -13,25 +13,41 @@ public abstract class BaseArrow : MonoBehaviour
     protected float speed;
     protected float rangeSqr;
     protected Vector3 startPos;
-protected Vector3 moveDir;
+    protected Vector3 moveDir;
+    protected bool _isEnemyProjectile;
 
-public virtual void Launch(float speed, float range, Vector3? targetPos = null)
-{
-    this.speed = speed;
-    this.rangeSqr = range * range;
-    startPos = transform.position;
+    public virtual void Launch(float speed, float range, Vector3? targetPos = null, bool isEnemyProjectile = false)
+    {
+        this.speed = speed;
+        this.rangeSqr = range * range;
+        _isEnemyProjectile = isEnemyProjectile;
+        startPos = transform.position;
 
-    if (targetPos.HasValue)
-    {
-        moveDir = (targetPos.Value - transform.position).normalized;
-        if (moveDir != Vector3.zero)
-            transform.rotation = Quaternion.LookRotation(moveDir);
+        if (targetPos.HasValue)
+        {
+            moveDir = (targetPos.Value - transform.position).normalized;
+            if (moveDir != Vector3.zero)
+                transform.rotation = Quaternion.LookRotation(moveDir);
+        }
+        else
+        {
+            moveDir = transform.forward; // use current facing
+        }
     }
-    else
+
+    protected bool IsValidHit(Collider other, out IDamageable damageable)
     {
-        moveDir = transform.forward; // use current facing
+        // Query deeply up the physics tree securely in case the raw capsule collider is on a nested model wrapper!
+        damageable = other.GetComponentInParent<IDamageable>();
+        if (damageable != null)
+        {
+            // Crucial Team/Tag cross-check constraint queried dynamically against the raw script holder properly
+            bool isPlayerHit = ((MonoBehaviour)damageable).CompareTag("Player");
+            if (isPlayerHit && _isEnemyProjectile) return true;
+            if (!isPlayerHit && !_isEnemyProjectile) return true;
+        }
+        return false;
     }
-}
 
     protected void CheckRange()
     {

@@ -10,9 +10,9 @@ public class NormalArrow : BaseArrow
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent<Enemy>(out var enemy))
+        if (IsValidHit(other, out var damageable))
         {
-            enemy.TakeDamage(damage);
+            damageable.TakeDamage(damage);
             Poof();
         }
     }

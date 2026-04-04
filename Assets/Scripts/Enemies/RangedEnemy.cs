@@ -1,0 +1,49 @@
+using UnityEngine;
+
+public class RangedEnemy : Enemy
+{
+    [Header("Ranged Mechanics")]
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private float shootInterval = 2.5f;
+    private float _shootTimer;
+
+    protected override void BehaviorUpdate()
+    {
+        if (playerTarget == null) return;
+
+        Vector3 flatTargetPos = new Vector3(playerTarget.position.x, transform.position.y, playerTarget.position.z);
+        float dist = Vector3.Distance(transform.position, flatTargetPos);
+
+        if (dist > aggroRange) return;
+
+        transform.LookAt(flatTargetPos);
+
+        if (dist < attackRange - 4f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, -moveSpeed * Time.deltaTime);
+        }
+        else if (dist > attackRange)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
+        }
+
+        _shootTimer -= Time.deltaTime;
+        if (_shootTimer <= 0 && dist <= attackRange)
+        {
+            Shoot();
+            _shootTimer = shootInterval;
+        }
+    }
+
+    private void Shoot()
+    {
+        if (ArrowPoolManager.Instance != null)
+        {
+            Transform fp = firePoint != null ? firePoint : transform;
+            Vector3 flatTarget = new Vector3(playerTarget.position.x, fp.position.y, playerTarget.position.z);
+
+            // Fire strictly forward, letting it fly all the way to its Aggro boundary limits!
+            ArrowPoolManager.Instance.FireArrow(fp.position, fp.rotation, 15f, aggroRange, null, true);
+        }
+    }
+}
