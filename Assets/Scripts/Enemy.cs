@@ -9,6 +9,8 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 {
     [Header("Components")]
     [SerializeField] protected Animator animator;
+    [SerializeField] protected GameObject highlightObject;
+
 
     [Header("Base Stats")]
     [SerializeField] protected float maxHealth = 30f;
@@ -128,11 +130,11 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         if (blockCooldownTimer > 0) return;
         if (ArrowPoolManager.Instance == null) return;
-        
+
         foreach (var arrow in ArrowPoolManager.Instance.ActiveArrows)
         {
             if (arrow == null || arrow.IsEnemyProjectile) continue;
-            
+
             Vector3 toEnemy = transform.position - arrow.transform.position;
             if (toEnemy.sqrMagnitude < 64f)
             {
@@ -154,7 +156,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
             foreach (var ability in equippedAbilities)
                 ability.TickCooldown(Time.deltaTime);
         }
-        
+
         if (blockCooldownTimer > 0) blockCooldownTimer -= Time.deltaTime;
     }
 
@@ -228,7 +230,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         CheckForIncomingAttacks();
         if (currentState == EnemyState.Block) return;
-        
+
         if (playerTarget == null || Vector3.Distance(transform.position, playerTarget.position) > aggroRange * 1.5f)
         {
             ChangeState(EnemyState.Idle);
@@ -324,14 +326,18 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
     public void SetReward(int reward) => rewardGold = reward;
 
-    public virtual void SetHighlighted(bool isHighlighted) { }
+    public virtual void SetHighlighted(bool isHighlighted)
+    {
+        if (highlightObject != null)
+            highlightObject.SetActive(isHighlighted);
+    }
 
     protected abstract void BehaviorUpdate();
 
     public virtual void TakeDamage(float amount)
     {
         if (currentState == EnemyState.Block || currentState == EnemyState.Dead || currentState == EnemyState.Victory) return;
-        
+
         currentHealth -= amount;
 
         if (currentHealth > 0f)
