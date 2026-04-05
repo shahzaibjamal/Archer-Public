@@ -23,29 +23,57 @@ public class RangedEnemy : Enemy
         {
             // Flee: Turn away from player and run forward
             Vector3 fleeDir = (transform.position - flatTargetPos).normalized;
-            Vector3 fleeTarget = transform.position + fleeDir * 2f;
+            Vector3 fleeTarget = transform.position + fleeDir * 3f;
+            
+            if (agent != null)
+            {
+                agent.isStopped = false;
+                agent.SetDestination(fleeTarget);
+            }
+            else
+            {
+                transform.position = Vector3.MoveTowards(transform.position, fleeTarget, moveSpeed * Time.deltaTime);
+            }
             transform.LookAt(new Vector3(fleeTarget.x, transform.position.y, fleeTarget.z));
-            transform.position = Vector3.MoveTowards(transform.position, fleeTarget, moveSpeed * Time.deltaTime);
         }
-        else if (dist > attackRange)
+        else if (dist > attackRange || !HasLineOfSight())
         {
-            // Approach: Look at and move towards player
-            transform.LookAt(flatTargetPos);
-            transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
+            // Approach: Move towards player if too far OR if player is behind an obstacle
+            if (agent != null)
+            {
+                agent.isStopped = false;
+                agent.SetDestination(playerTarget.position);
+            }
+            else
+            {
+                transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
+                transform.LookAt(flatTargetPos);
+            }
         }
         else
         {
-            // Within attack range: Stay static and just look at player
+            // Within attack range AND has LOS: Stay static and just look at player
+            if (agent != null) agent.isStopped = true;
             transform.LookAt(flatTargetPos);
         }
 
         _shootTimer -= Time.deltaTime;
-        if (_shootTimer <= 0 && dist <= attackRange)
+        if (_shootTimer <= 0 && dist <= attackRange && HasLineOfSight())
         {
             if (animator != null) animator.SetTrigger("Attack01");
             _shootTimer = shootInterval;
             LockAttackState(1f, shootHitDelay, Shoot); // Halts FSM stagger states gracefully while securely scheduling arrow payload 
         }
+    }
+
+    public override bool HasLineOfSight()
+    {
+        if (playerTarget == null) return false;
+        Transform fp = firePoint != null ? firePoint : transform;
+        Vector3 start = fp.position;
+        // Strict horizontal check matching the corrected projectile trajectory from Shoot()
+        Vector3 end = new Vector3(playerTarget.position.x, start.y, playerTarget.position.z);
+        return !Physics.Linecast(start, end, obstacleLayer);
     }
 
     private void Shoot()

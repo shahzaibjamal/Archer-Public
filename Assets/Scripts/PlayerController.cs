@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
-using Unity.Android.Gradle.Manifest;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.AI;
 
 public class PlayerController : MonoBehaviour, IDamageable
 {
@@ -10,7 +8,8 @@ public class PlayerController : MonoBehaviour, IDamageable
     [SerializeField] private FloatingJoystick _floatingJoystick;
     private Vector2 _moveInput;
     private PlayerAnimator _playerAnim;
-    private CharacterController _controller;
+    private NavMeshAgent _agent;
+    private CharacterController _controller; // Keeping for compatibility or specific needs if not fully replaced
 
     [SerializeField] private Transform _firePoint;
     [SerializeField] private float _rotationSpeed = 15f;
@@ -20,6 +19,7 @@ public class PlayerController : MonoBehaviour, IDamageable
     private bool _isDead = false;
 
     [Header("Targeting")]
+    [SerializeField] private LayerMask _obstacleLayer;
     [SerializeField] private bool _isActive = true;
     [SerializeField] private bool _targetByMoveDirection = true;
     [SerializeField] private float _lockOnRadius = 10f;
@@ -44,6 +44,13 @@ public class PlayerController : MonoBehaviour, IDamageable
         if (_actions == null)
             _actions = new InputSystem_Actions();
         _controller = GetComponent<CharacterController>();
+        _agent = GetComponent<NavMeshAgent>();
+        if (_agent != null)
+        {
+            _agent.updateRotation = false; // We handle rotation manually for smooth feel
+            _agent.updateUpAxis = false;
+        }
+
         _playerAnim = gameObject.GetComponent<PlayerAnimator>() ?? gameObject.AddComponent<PlayerAnimator>();
     }
     private void Start()
@@ -63,6 +70,12 @@ public class PlayerController : MonoBehaviour, IDamageable
                 if (p.MeleeRadius > 0) _meleeRadius = p.MeleeRadius;
                 if (p.MaxHealth > 0) _maxHealth = p.MaxHealth;
             }
+        }
+
+        if (_agent != null)
+        {
+            _agent.speed = _moveSpeed;
+            _agent.angularSpeed = _rotationSpeed * 50f; // Scale up for NavMesh angularSpeed units
         }
 
         _currentHealth = _maxHealth;
@@ -125,6 +138,12 @@ public class PlayerController : MonoBehaviour, IDamageable
                 float flightTimeAvailable = _attackInterval - scaledFireTime;
                 float calculatedArrowSpeed = flightTimeAvailable > 0.01f ? _lockOnRadius / flightTimeAvailable : _lockOnRadius;
                 Transform fp = _firePoint != null ? _firePoint : transform;
+
+                if (!IsLineOfSightClear(_currentTarget))
+                {
+                    _hasFiredInCurrentCycle = true; // Skip this cycle if blocked
+                    return;
+                }
 
                 Vector3? tgtPos = null;
                 if (_currentTarget != null)
@@ -198,9 +217,11 @@ public class PlayerController : MonoBehaviour, IDamageable
 
             float distanceSqr = (transform.position - enemy.transform.position).sqrMagnitude;
 
-            // Only evaluate if it's within Lock-On radius OR if it literally is our current Target holding hysteresis
+            // Only evaluate if it's within Lock-On radius AND visible
             if (distanceSqr <= _lockOnRadius * _lockOnRadius || enemy == _currentTarget)
             {
+                if (!IsLineOfSightClear(enemy)) continue;
+
                 if (_targetByMoveDirection)
                 {
                     if (hasMoveInput)
@@ -261,7 +282,15 @@ public class PlayerController : MonoBehaviour, IDamageable
     private void Move()
     {
         Vector3 move = new Vector3(_moveInput.x, 0, _moveInput.y);
-        _controller.Move(move * Time.deltaTime * _moveSpeed);
+
+        if (_agent != null && _agent.enabled)
+        {
+            _agent.Move(move * Time.deltaTime * _moveSpeed);
+        }
+        else if (_controller != null)
+        {
+            _controller.Move(move * Time.deltaTime * _moveSpeed);
+        }
 
         float animSpeed = _moveInput.magnitude;
 
@@ -325,11 +354,28 @@ public class PlayerController : MonoBehaviour, IDamageable
     {
         _isDead = true;
         _moveInput = Vector2.zero;
+        if (_agent != null) _agent.enabled = false;
         _playerAnim.UpdateLocomotion(0, 0);
         // Play death animation if available
         if (TryGetComponent<Animator>(out var anim)) anim.SetTrigger("Death");
 
         GameEvents.TriggerPlayerDied();
+    }
+
+    private bool IsLineOfSightClear(Enemy target)
+    {
+        if (target == null) return false;
+
+        Vector3 start = _firePoint != null ? _firePoint.position : transform.position + Vector3.up * 1f;
+        // Horizontal check: Keep end height identical to start height to match arrow trajectory
+        Vector3 end = new Vector3(target.transform.position.x, start.y, target.transform.position.z);
+
+        // Securely check if any environment colliders interrupt the path natively
+        if (Physics.Linecast(start, end, out RaycastHit hit, _obstacleLayer))
+        {
+            return false;
+        }
+        return true;
     }
 
     private void OnDrawGizmos()

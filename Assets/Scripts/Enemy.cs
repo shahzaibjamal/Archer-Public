@@ -1,6 +1,6 @@
-using UnityEngine;
-using System.Collections.Generic;
 using System;
+using UnityEngine.AI;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 public enum EnemyState { Idle, Patrol, Combat, UsingAbility, Hit, Stunned, Attacking, Block, Taunt, Dead, Victory }
@@ -10,6 +10,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     [Header("Components")]
     [SerializeField] protected Animator animator;
     [SerializeField] protected GameObject highlightObject;
+    protected NavMeshAgent agent;
 
 
     [Header("Base Stats")]
@@ -32,6 +33,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     [SerializeField] protected int hitsToStun = 3;
 
     [Header("New States")]
+    [SerializeField] protected LayerMask obstacleLayer;
     [SerializeField] protected float blockDuration = 1f;
     [SerializeField] protected float blockCooldown = 3f;
     [SerializeField] protected float tauntDuration = 2f;
@@ -82,6 +84,16 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
         currentHealth = maxHealth;
         equippedAbilities = GetComponents<EnemyAbility>();
+        agent = GetComponent<NavMeshAgent>();
+
+        // Sync NavMeshAgent with Meta Stats
+        if (agent != null)
+        {
+            agent.speed = moveSpeed;
+            agent.angularSpeed = 120f; // Default high enough for responsive AI
+            agent.acceleration = 20f;
+            agent.stoppingDistance = 0.1f;
+        }
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null) playerTarget = playerObj.transform;
@@ -104,10 +116,19 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         if (currentHealth <= 0) return;
 
-        transform.position = new Vector3(transform.position.x, visualYOffset, transform.position.z);
+        // transform.position = new Vector3(transform.position.x, visualYOffset, transform.position.z);
 
-        float currentSpeed = (transform.position - _lastPosition).magnitude / Time.deltaTime;
-        _lastPosition = transform.position;
+        float currentSpeed = 0f;
+        if (agent != null)
+        {
+            currentSpeed = agent.velocity.magnitude;
+        }
+        else
+        {
+            currentSpeed = (transform.position - _lastPosition).magnitude / Time.deltaTime;
+            _lastPosition = transform.position;
+        }
+
         if (animator != null) animator.SetFloat("Speed", currentSpeed);
 
         UpdateCooldowns();
@@ -214,15 +235,31 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         if (currentState == EnemyState.Block) return;
         if (CheckAggro()) return;
 
-        float dist = Vector3.Distance(transform.position, patrolTargetPos);
-        if (dist > 0.5f)
+        if (agent != null)
         {
-            transform.position = Vector3.MoveTowards(transform.position, patrolTargetPos, moveSpeed * 0.5f * Time.deltaTime);
-            transform.LookAt(new Vector3(patrolTargetPos.x, transform.position.y, patrolTargetPos.z));
+            if (agent.destination != patrolTargetPos)
+            {
+                agent.isStopped = false;
+                agent.SetDestination(patrolTargetPos);
+            }
+
+            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+            {
+                ChangeState(EnemyState.Idle);
+            }
         }
         else
         {
-            ChangeState(EnemyState.Idle);
+            float dist = Vector3.Distance(transform.position, patrolTargetPos);
+            if (dist > 0.5f)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, patrolTargetPos, moveSpeed * 0.5f * Time.deltaTime);
+                transform.LookAt(new Vector3(patrolTargetPos.x, transform.position.y, patrolTargetPos.z));
+            }
+            else
+            {
+                ChangeState(EnemyState.Idle);
+            }
         }
     }
 
@@ -326,6 +363,15 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
     public void SetReward(int reward) => rewardGold = reward;
 
+    public virtual bool HasLineOfSight()
+    {
+        if (playerTarget == null) return false;
+        Vector3 start = transform.position + Vector3.up * 1.5f;
+        // Perfect horizontal check matching trajectory: start height remains constant across cast
+        Vector3 end = new Vector3(playerTarget.position.x, start.y, playerTarget.position.z);
+        return !Physics.Linecast(start, end, obstacleLayer);
+    }
+
     public virtual void SetHighlighted(bool isHighlighted)
     {
         if (highlightObject != null)
@@ -385,6 +431,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
         Collider col = GetComponent<Collider>();
         if (col != null) col.enabled = false;
+        if (agent != null) agent.enabled = false;
 
         Destroy(gameObject, deathDuration);
     }

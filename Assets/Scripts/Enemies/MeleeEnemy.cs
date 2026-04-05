@@ -43,11 +43,20 @@ public class MeleeEnemy : Enemy
                 }
             }
 
-            transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
-            transform.LookAt(flatTargetPos);
+            if (agent != null)
+            {
+                agent.isStopped = false;
+                agent.SetDestination(playerTarget.position);
+            }
+            else
+            {
+                transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
+                transform.LookAt(flatTargetPos);
+            }
         }
         else if (dist <= attackRange)
         {
+            if (agent != null) agent.isStopped = true;
             // Within strike range! Turn to face but do not MoveTowards physically into them!
             transform.LookAt(flatTargetPos);
             

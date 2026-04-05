@@ -226,6 +226,7 @@ GameObject:
   - component: {fileID: 2266974354397271205}
   - component: {fileID: 6729773312740056231}
   - component: {fileID: 3766137396570077148}
+  - component: {fileID: -5307344396085424313}
   m_Layer: 6
   m_Name: MeleeEnemy
   m_TagString: Untagged
@@ -358,6 +359,9 @@ MonoBehaviour:
   hitStunDuration: 0.5
   stunDuration: 2
   hitsToStun: 3
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 512
   blockDuration: 1
   blockCooldown: 3
   tauntDuration: 2
@@ -394,6 +398,28 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!195 &-5307344396085424313
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4402756469435821769}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &7802498949143041916
 GameObject:
   m_ObjectHideFlags: 0
