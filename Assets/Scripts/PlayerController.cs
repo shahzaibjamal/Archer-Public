@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour, IDamageable
     private Vector2 _moveInput;
     private PlayerAnimator _playerAnim;
     private NavMeshAgent _agent;
-    private CharacterController _controller; // Keeping for compatibility or specific needs if not fully replaced
+    private CharacterController _controller;
 
     [SerializeField] private Transform _firePoint;
     [SerializeField] private float _rotationSpeed = 15f;
@@ -25,7 +25,7 @@ public class PlayerController : MonoBehaviour, IDamageable
     [SerializeField] private float _lockOnRadius = 10f;
     [SerializeField] private float _loseTargetRadius = 15f;
     [SerializeField] private float _meleeRadius = 2f;
-    [SerializeField, Range(0.1f, 2f)] private float _attackInterval = 1f;
+    [SerializeField, Range(0.1f, 3f)] private float _attackInterval = 1f;
     [SerializeField, Range(0f, 1f)] private float _cooldown = 0.2f; // Time spent recovering mathematically after animation
     [SerializeField, Range(0f, 1.5f)] private float _rangedFireTime = 0.4f; // NATIVE time in seconds when arrow leaves bow string
     [SerializeField] private float _rangedAnimClipDuration = 1f; // Length of the shooting anim
@@ -38,6 +38,15 @@ public class PlayerController : MonoBehaviour, IDamageable
     public Action<float, float> OnHealthChanged;
     public float CurrentHealth => _currentHealth;
     public float MaxHealth => _maxHealth;
+
+    public Vector3 GetMoveInput()
+    {
+        return _moveInput;
+    }
+    public float GetMoveSpeed()
+    {
+        return _moveSpeed;
+    }
 
     private void Awake()
     {
@@ -148,12 +157,10 @@ public class PlayerController : MonoBehaviour, IDamageable
                 Vector3? tgtPos = null;
                 if (_currentTarget != null)
                 {
-                    // Enforce completely horizontal trajectory relative to firepoint elevation
-                    tgtPos = new Vector3(_currentTarget.transform.position.x, fp.position.y, _currentTarget.transform.position.z);
+                    tgtPos = _currentTarget.transform.position;
                 }
 
-                // ArrowPoolManager.Instance.FireArrow(fp.position, fp.rotation, calculatedArrowSpeed, _loseTargetRadius, tgtPos, false);
-                ArrowPoolManager.Instance.FireArrow(fp.position, fp.rotation, calculatedArrowSpeed, _loseTargetRadius, null, false);
+                ArrowPoolManager.Instance.FireArrow(fp.position, fp.rotation, calculatedArrowSpeed, _loseTargetRadius, tgtPos, false);
             }
             _hasFiredInCurrentCycle = true;
         }

@@ -24,7 +24,7 @@ public class RangedEnemy : Enemy
             // Flee: Turn away from player and run forward
             Vector3 fleeDir = (transform.position - flatTargetPos).normalized;
             Vector3 fleeTarget = transform.position + fleeDir * 3f;
-            
+
             if (agent != null)
             {
                 agent.isStopped = false;
@@ -81,15 +81,13 @@ public class RangedEnemy : Enemy
         if (projectilePrefab != null && playerTarget != null)
         {
             Transform fp = firePoint != null ? firePoint : transform;
-            
-            // Force a perfectly horizontal (Y=0) launch trajectory at the firePoint's height
-            Vector3 targetFlattened = new Vector3(playerTarget.position.x, fp.position.y, playerTarget.position.z);
-            Vector3 targetDir = (targetFlattened - fp.position).normalized;
-            
-            // Set launch transform and pass non-homing target position in that horizontal direction
-            Vector3 targetPos = fp.position + targetDir * 10f;
-            
+
+            // Simple fire: Just point at the target and tell the arrow where it is
+            Vector3 targetPos = playerTarget.position;
+            Vector3 targetDir = (targetPos - fp.position).normalized;
+
             BaseArrow arrow = Instantiate(projectilePrefab, fp.position, Quaternion.LookRotation(targetDir));
+            // Let the arrow handle the impact height (chest) and arc-height internally
             arrow.Launch(15f, aggroRange, targetPos, true);
         }
     }

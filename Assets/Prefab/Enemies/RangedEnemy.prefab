@@ -264,7 +264,7 @@ MonoBehaviour:
   tauntDuration: 2
   deathDuration: 3
   enemyTypeName: Melee
-  projectilePrefab: {fileID: -2015932531379361559, guid: b1a8cdf7a73ee7f419846b29bae704c2, type: 3}
+  projectilePrefab: {fileID: -8140720774159334384, guid: 56ce29d0d863db84b9701ce56e39f0a1, type: 3}
   firePoint: {fileID: 4960071276844219646}
   shootInterval: 2.5
   shootHitDelay: 0.4

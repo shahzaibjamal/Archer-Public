@@ -1,10 +1,10 @@
 {
   "PlayerStats": {
-    "MaxHealth": 100.0,
+    "MaxHealth": 10000.0,
     "MoveSpeed": 5.0,
     "RotationSpeed": 15.0,
     "AttackInterval": 1.0,
-    "Cooldown": 0.2,
+    "Cooldown": 1.0,
     "LockOnRadius": 10.0,
     "LoseTargetRadius": 15.0,
     "MeleeRadius": 2.0
@@ -24,7 +24,7 @@
     },
     {
       "EnemyType": "Ranged",
-      "MaxHealth": 20.0,
+      "MaxHealth": 2000.0,
       "MoveSpeed": 2.0,
       "AttackRange": 15.0,
       "AggroRange": 20.0,
@@ -78,11 +78,6 @@
         {
           "PreWaveDelay": 2.0,
           "EnemySpawns": [
-            {
-              "EnemyType": "Melee",
-              "Count": 1,
-              "RewardGold": 10
-            },
             {
               "EnemyType": "Ranged",
               "Count": 1,

@@ -15,9 +15,18 @@ public class EnemyHUD : MonoBehaviour
         mainCamera = Camera.main;
         if (targetEnemy != null)
         {
-            transform.forward = mainCamera.transform.forward;
             targetEnemy.OnHealthChanged += UpdateHealthBar;
             UpdateHealthBar(targetEnemy.CurrentHealth, targetEnemy.MaxHealth);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (mainCamera == null) mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            // Billboard rotation: Face the camera perfectly every frame
+            transform.LookAt(transform.position + mainCamera.transform.rotation * Vector3.forward, mainCamera.transform.rotation * Vector3.up);
         }
     }
 

@@ -2,11 +2,15 @@ using UnityEngine;
 
 public class TopDownCameraFollow : MonoBehaviour
 {
-    [SerializeField] private Transform player;     // assign your player
-    [SerializeField] private float yDistance = 15f; // height above player
-    [SerializeField] private float zDistance = 0f;  // optional offset forward/back
-    [SerializeField] private float angle = 45f;     // tilt angle downward
+    [SerializeField] private Transform player;     
+    [SerializeField] private float yDistance = 15f; 
+    [SerializeField] private float zDistance = 0f;  
+    [SerializeField] private float angle = 45f;     
     [SerializeField] private float smoothSpeed = 5f;
+
+    private void Awake()
+    {
+    }
 
     private void LateUpdate()
     {
