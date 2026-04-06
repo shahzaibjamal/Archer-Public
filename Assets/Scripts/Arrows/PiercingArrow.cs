@@ -4,9 +4,9 @@ public class PiercingArrow : BaseArrow
 {
     [SerializeField] private float overridingRange = 30f;
 
-    public override void Launch(float speed, float range, Vector3? targetPos = null, bool isEnemyProjectile = false)
+    public override void Launch(float speed, float range, float damageAmount, Vector3? targetPos = null, bool isEnemyProjectile = false)
     {
-        base.Launch(speed, overridingRange, targetPos, isEnemyProjectile);
+        base.Launch(speed, overridingRange, damageAmount, targetPos, isEnemyProjectile);
     }
 
     private void Update()

@@ -13,7 +13,6 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     [SerializeField] protected GameObject highlightObject;
     protected NavMeshAgent agent;
 
-
     [Header("Base Stats")]
     [SerializeField] protected float maxHealth = 30f;
     [SerializeField] protected float currentHealth;
@@ -23,24 +22,37 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     [SerializeField] protected float damage = 10f;
     [SerializeField] protected float visualYOffset = 1f;
 
-    [Header("AI & FSM pacing")]
+    [Header("AI & FSM Pacing")]
     [SerializeField] protected float baseIdleTime = 2f;
     [SerializeField] protected float patrolRange = 5f;
     [SerializeField] protected float abilityCheckInterval = 1.5f;
+    [SerializeField] protected float patrolSpeedMultiplier = 0.5f;
 
     [Header("Hit / Stun Dynamics")]
     [SerializeField] protected float hitStunDuration = 0.5f;
     [SerializeField] protected float stunDuration = 2f;
     [SerializeField] protected int hitsToStun = 3;
 
-    [Header("New States")]
+    [Header("Detection / Blocking")]
     [SerializeField] protected LayerMask obstacleLayer;
+    [SerializeField] protected float blockDetectionRadius = 8f;
+    [SerializeField] protected float blockAngleThreshold = 0.85f;
     [SerializeField] protected float blockDuration = 1f;
     [SerializeField] protected float blockCooldown = 3f;
+    [SerializeField] protected float incomingDetectionSqrRange = 64f; 
+
+    [Header("Movement Settings")]
+    [SerializeField] protected float angularSpeed = 120f;
+    [SerializeField] protected float acceleration = 20f;
+    [SerializeField] protected float stoppingDistance = 0.1f;
+
+    [Header("Miscellaneous")]
     [SerializeField] protected float tauntDuration = 2f;
     [SerializeField] protected float deathDuration = 3f;
+    [SerializeField] protected float fireCheckHeight = 1.5f;
+    [SerializeField] protected bool useInstantDamageAnim = true; // Set to false to see previous "queued" behavior
+    
     protected float blockCooldownTimer;
-
     protected EnemyState currentState = EnemyState.Idle;
     protected float stateTimer;
     protected Vector3 patrolTargetPos;
@@ -59,7 +71,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     public float MaxHealth => maxHealth;
     public Animator EnemyAnimator => animator;
     public Action<float, float> OnHealthChanged;
-    public string enemyTypeName = "Melee";
+    public EnemyType enemyType = EnemyType.Melee;
 
     private Renderer[] _renderers;
     private MaterialPropertyBlock _propBlock;
@@ -75,10 +87,9 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         _lastPosition = transform.position;
 
-        // Overlay JSON Metadata natively on top of any inspector tuning smoothly 
         if (DataManager.Instance != null)
         {
-            var stats = DataManager.Instance.GetEnemyStats(enemyTypeName);
+            var stats = DataManager.Instance.GetEnemyStats(enemyType);
             if (stats != null)
             {
                 if (stats.MaxHealth > 0) maxHealth = stats.MaxHealth;
@@ -90,6 +101,19 @@ public abstract class Enemy : MonoBehaviour, IDamageable
                 if (stats.PatrolRange > 0) patrolRange = stats.PatrolRange;
                 if (stats.AbilityCheckInterval > 0) abilityCheckInterval = stats.AbilityCheckInterval;
                 if (stats.HitsToStun > 0) hitsToStun = stats.HitsToStun;
+
+                // Sync new NavMesh settings
+                if (stats.AngularSpeed > 0) angularSpeed = stats.AngularSpeed;
+                if (stats.Acceleration > 0) acceleration = stats.Acceleration;
+                if (stats.StoppingDistance > 0) stoppingDistance = stats.StoppingDistance;
+
+                // Sync block detection
+                if (stats.BlockDetectionRadius > 0) 
+                {
+                    blockDetectionRadius = stats.BlockDetectionRadius;
+                    incomingDetectionSqrRange = blockDetectionRadius * blockDetectionRadius;
+                }
+                if (stats.BlockAngleThreshold > 0) blockAngleThreshold = stats.BlockAngleThreshold;
             }
         }
 
@@ -97,13 +121,12 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         equippedAbilities = GetComponents<EnemyAbility>();
         agent = GetComponent<NavMeshAgent>();
 
-        // Sync NavMeshAgent with Meta Stats
         if (agent != null)
         {
             agent.speed = moveSpeed;
-            agent.angularSpeed = 120f; // Default high enough for responsive AI
-            agent.acceleration = 20f;
-            agent.stoppingDistance = 0.1f;
+            agent.angularSpeed = angularSpeed;
+            agent.acceleration = acceleration;
+            agent.stoppingDistance = stoppingDistance;
         }
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -126,8 +149,6 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     protected virtual void Update()
     {
         if (currentHealth <= 0) return;
-
-        // transform.position = new Vector3(transform.position.x, visualYOffset, transform.position.z);
 
         float currentSpeed = 0f;
         if (agent != null)
@@ -168,9 +189,9 @@ public abstract class Enemy : MonoBehaviour, IDamageable
             if (arrow == null || arrow.IsEnemyProjectile) continue;
 
             Vector3 toEnemy = transform.position - arrow.transform.position;
-            if (toEnemy.sqrMagnitude < 64f)
+            if (toEnemy.sqrMagnitude < incomingDetectionSqrRange)
             {
-                if (Vector3.Dot(arrow.transform.forward, toEnemy.normalized) > 0.85f)
+                if (Vector3.Dot(arrow.transform.forward, toEnemy.normalized) > blockAngleThreshold)
                 {
                     blockCooldownTimer = blockCooldown;
                     if (animator != null) animator.SetTrigger("Block");
@@ -194,7 +215,6 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
     public void LockAttackState(float duration, float hitDelay = 0f, Action onHit = null)
     {
-        // Enforces animation lock so they cannot be natively knocked out of their Attack state by generic arrows
         stateTimer = duration;
         attackActionTimer = hitDelay;
         pendingAttackAction = onHit;
@@ -262,9 +282,9 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         else
         {
             float dist = Vector3.Distance(transform.position, patrolTargetPos);
-            if (dist > 0.5f)
+            if (dist > stoppingDistance)
             {
-                transform.position = Vector3.MoveTowards(transform.position, patrolTargetPos, moveSpeed * 0.5f * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, patrolTargetPos, moveSpeed * patrolSpeedMultiplier * Time.deltaTime);
                 transform.LookAt(new Vector3(patrolTargetPos.x, transform.position.y, patrolTargetPos.z));
             }
             else
@@ -377,8 +397,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     public virtual bool HasLineOfSight()
     {
         if (playerTarget == null) return false;
-        Vector3 start = transform.position + Vector3.up * 1.5f;
-        // Perfect horizontal check matching trajectory: start height remains constant across cast
+        Vector3 start = transform.position + Vector3.up * fireCheckHeight;
         Vector3 end = new Vector3(playerTarget.position.x, start.y, playerTarget.position.z);
         return !Physics.Linecast(start, end, obstacleLayer);
     }
@@ -403,14 +422,18 @@ public abstract class Enemy : MonoBehaviour, IDamageable
             if (_hitsTaken >= hitsToStun)
             {
                 _hitsTaken = 0;
-                // Force Stun regardless of whether they are in the middle of attacking!
                 if (animator != null) animator.SetTrigger("Stun");
                 ChangeState(EnemyState.Stunned);
             }
             else if (currentState != EnemyState.Attacking && currentState != EnemyState.UsingAbility)
             {
-                // Standard Hit Stagger cancels generic movement completely
-                if (animator != null) animator.SetTrigger("TakeDamage");
+                if (animator != null)
+                {
+                    if (useInstantDamageAnim)
+                        animator.Play("TakeDamage", 0, 0f);
+                    else
+                        animator.SetTrigger("TakeDamage");
+                }
                 ChangeState(EnemyState.Hit);
             }
 
@@ -426,23 +449,17 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
-    protected virtual void OnHitVFXStub()
-    {
-        // Insert Particle Systems or Blood Splatters here!
-        // Debug.Log($"Spawned Hit VFX on {name}"); // Natively stubbed out for later FX integrations
-    }
+    protected virtual void OnHitVFXStub() { }
 
     private void ApplyColor(Color color)
     {
         foreach (var r in _renderers)
         {
-            // We use GetPropertyBlock to avoid creating a new Material Instance
             r.GetPropertyBlock(_propBlock);
             _propBlock.SetColor(BaseColorId, color);
             r.SetPropertyBlock(_propBlock);
         }
     }
-
 
     public virtual void Heal(float amount)
     {
@@ -452,15 +469,36 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
     protected virtual void Die()
     {
+        if (currentState == EnemyState.Dead) return;
+        StartCoroutine(DieSequence());
+    }
+
+    private System.Collections.IEnumerator DieSequence()
+    {
         ChangeState(EnemyState.Dead);
         if (animator != null) animator.SetTrigger("Death");
+
+        OnDeathVFXStub();
+        OnDeathSFXStub();
 
         Collider col = GetComponent<Collider>();
         if (col != null) col.enabled = false;
         if (agent != null) agent.enabled = false;
 
-        Destroy(gameObject, deathDuration);
+        yield return new WaitForSeconds(deathDuration);
+
+        if (AssetLoader.Instance != null)
+        {
+            AssetLoader.Instance.ReleaseInstance(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
+
+    protected virtual void OnDeathVFXStub() { }
+    protected virtual void OnDeathSFXStub() { }
 
     private void OnDestroy()
     {

@@ -5,6 +5,7 @@ public abstract class BaseArrow : MonoBehaviour
 {
     public Action<BaseArrow> OnDespawn;
 
+    public ArrowType type = ArrowType.Normal;
     [SerializeField] protected float damage = 10f;
     [Header("VFX/SFX")]
     [SerializeField] protected GameObject hitVfxPrefab;
@@ -16,12 +17,13 @@ public abstract class BaseArrow : MonoBehaviour
     protected Vector3 moveDir;
     public bool IsEnemyProjectile { get; protected set; }
 
-    public virtual void Launch(float speed, float range, Vector3? targetPos = null, bool isEnemyProjectile = false)
+    public virtual void Launch(float speed, float range, float damageAmount, Vector3? targetPos = null, bool isEnemyProjectile = false)
     {
         this.speed = speed;
         this.rangeSqr = range * range;
-        IsEnemyProjectile = isEnemyProjectile;
-        startPos = transform.position;
+        this.damage = damageAmount;
+        this.IsEnemyProjectile = isEnemyProjectile;
+        this.startPos = transform.position;
 
         if (targetPos.HasValue)
         {

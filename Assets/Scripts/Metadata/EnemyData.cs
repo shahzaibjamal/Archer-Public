@@ -1,7 +1,8 @@
 [System.Serializable]
 public class EnemyData
 {
-    public string EnemyType;
+    public EnemyType EnemyType;
+    public string PrefabName;
     public float MaxHealth;
     public float MoveSpeed;
     public float AttackRange;
@@ -11,4 +12,13 @@ public class EnemyData
     public float PatrolRange;
     public float AbilityCheckInterval;
     public int HitsToStun;
+
+    // NavMeshAgent Settings
+    public float AngularSpeed;
+    public float Acceleration;
+    public float StoppingDistance;
+
+    // Block/Detection Settings
+    public float BlockDetectionRadius;
+    public float BlockAngleThreshold;
 }

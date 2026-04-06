@@ -7,10 +7,10 @@ public class PredictiveArrow : ProjectileArrow
     [Range(0f, 1f)] public float predictionSkill = 1.0f;
     [Range(0f, 5f)] public float mechanicalSpread = 0.4f;
 
-    public override void Launch(float speed, float range, Vector3? targetPos = null, bool isEnemyProjectile = false)
+    public override void Launch(float speed, float range, float damageAmount, Vector3? targetPos = null, bool isEnemyProjectile = false)
     {
         // Call base to set up initial flags and fallback velocity if no target
-        base.Launch(speed, range, targetPos, isEnemyProjectile);
+        base.Launch(speed, range, damageAmount, targetPos, isEnemyProjectile);
 
         if (!targetPos.HasValue) return;
 

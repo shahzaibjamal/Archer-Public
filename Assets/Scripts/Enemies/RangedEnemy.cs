@@ -3,7 +3,7 @@ using UnityEngine;
 public class RangedEnemy : Enemy
 {
     [Header("Ranged Mechanics")]
-    [SerializeField] private BaseArrow projectilePrefab;
+    [SerializeField] private ArrowType arrowType = ArrowType.Predictive;
     [SerializeField] private Transform firePoint;
     [SerializeField] private float shootInterval = 2.5f;
     [SerializeField] private float shootHitDelay = 0.4f;
@@ -67,9 +67,16 @@ public class RangedEnemy : Enemy
         _shootTimer -= Time.deltaTime;
         if (_shootTimer <= 0 && dist <= attackRange && HasLineOfSight())
         {
-            if (animator != null) animator.SetTrigger("Attack01");
-            _shootTimer = shootInterval;
-            LockAttackState(1f, shootHitDelay, Shoot); // Halts FSM stagger states gracefully while securely scheduling arrow payload 
+            Vector3 dirToPlayer = (flatTargetPos - transform.position).normalized;
+            float dot = Vector3.Dot(transform.forward, dirToPlayer);
+            bool isFacingPlayer = dot > 0.7f; // Roughly 45 degrees
+
+            if (isFacingPlayer)
+            {
+                if (animator != null) animator.SetTrigger("Attack01");
+                _shootTimer = shootInterval;
+                LockAttackState(1f, shootHitDelay, Shoot);
+            }
         }
     }
 
@@ -85,7 +92,7 @@ public class RangedEnemy : Enemy
 
     private void Shoot()
     {
-        if (projectilePrefab != null && playerTarget != null)
+        if (playerTarget != null && ArrowPoolManager.Instance != null)
         {
             Transform fp = firePoint != null ? firePoint : transform;
 
@@ -93,9 +100,8 @@ public class RangedEnemy : Enemy
             Vector3 targetPos = playerTarget.position;
             Vector3 targetDir = (targetPos - fp.position).normalized;
 
-            BaseArrow arrow = Instantiate(projectilePrefab, fp.position, Quaternion.LookRotation(targetDir));
-            // Let the arrow handle the impact height (chest) and arc-height internally
-            arrow.Launch(15f, aggroRange, targetPos, true);
+            // Let the factory handle the arrow type based on Addressables
+            ArrowPoolManager.Instance.FireArrow(arrowType, fp.position, Quaternion.LookRotation(targetDir), 15f, aggroRange, damage, targetPos, true);
         }
     }
 }

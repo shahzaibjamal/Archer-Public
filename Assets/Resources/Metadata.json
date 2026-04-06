@@ -4,71 +4,97 @@
     "MoveSpeed": 5.0,
     "RotationSpeed": 15.0,
     "AttackInterval": 1.0,
-    "Cooldown": 1.0,
+    "Cooldown": 0.5,
     "LockOnRadius": 10.0,
     "LoseTargetRadius": 15.0,
-    "MeleeRadius": 2.0
+    "MeleeRadius": 2.0,
+    "BaseDamage": 10.0,
+    "DamageIncrement": 2.0,
+    "AttackIntervalDecrement": 0.05,
+    "CooldownDecrement": 0.05,
+    "MoveSpeedIncrement": 0.2,
+    "RangeIncrement": 0.5,
+    "HealAmount": 25.0,
+    "InvincibilityDuration": 3.0,
+    "AttackUpMultiplier": 1.5,
+    "DefenseUpReduction": 0.5,
+    "DefenseDownDebuff": 0.5,
+    "InitialPowerUpCount": 3
   },
+  "Arsenal": [
+    {
+      "ArrowType": "Normal",
+      "PrefabName": "ProjectileArrow",
+      "Cooldown": 0.0,
+      "DamageMultiplier": 1.0
+    },
+    {
+      "ArrowType": "Piercing",
+      "PrefabName": "PiercingArrow",
+      "Cooldown": 5.0,
+      "DamageMultiplier": 2.5
+    },
+    {
+      "ArrowType": "Predictive",
+      "PrefabName": "PredictiveArrow",
+      "Cooldown": 2.0,
+      "DamageMultiplier": 1.5
+    }
+  ],
   "EnemyStats": [
     {
       "EnemyType": "Melee",
-      "MaxHealth": 30.0,
-      "MoveSpeed": 3.0,
+      "PrefabName": "MeleeEnemy",
+      "MaxHealth": 3500.0,
+      "MoveSpeed": 3.5,
       "AttackRange": 2.0,
       "AggroRange": 15.0,
-      "Damage": 1.0,
-      "BaseIdleTime": 2.0,
+      "Damage": 10.0,
+      "BaseIdleTime": 1.5,
       "PatrolRange": 5.0,
-      "AbilityCheckInterval": 1.5,
-      "HitsToStun": 3
+      "AbilityCheckInterval": 2.0,
+      "HitsToStun": 3,
+      "AngularSpeed": 120.0,
+      "Acceleration": 20.0,
+      "StoppingDistance": 0.5,
+      "BlockDetectionRadius": 4.0,
+      "BlockAngleThreshold": 0.85
     },
     {
       "EnemyType": "Ranged",
-      "MaxHealth": 2000.0,
-      "MoveSpeed": 2.0,
-      "AttackRange": 15.0,
+      "PrefabName": "RangedEnemy",
+      "MaxHealth": 2500.0,
+      "MoveSpeed": 2.5,
+      "AttackRange": 12.0,
       "AggroRange": 20.0,
-      "Damage": 5.0,
+      "Damage": 8.0,
       "BaseIdleTime": 2.0,
-      "PatrolRange": 5.0,
+      "PatrolRange": 8.0,
       "AbilityCheckInterval": 2.0,
-      "HitsToStun": 2
+      "HitsToStun": 2,
+      "AngularSpeed": 150.0,
+      "Acceleration": 15.0,
+      "StoppingDistance": 8.0,
+      "BlockDetectionRadius": 6.0,
+      "BlockAngleThreshold": 0.7
     },
     {
       "EnemyType": "Healer",
-      "MaxHealth": 25.0,
+      "PrefabName": "HealerEnemy",
+      "MaxHealth": 30.0,
       "MoveSpeed": 4.0,
       "AttackRange": 8.0,
       "AggroRange": 15.0,
       "Damage": 0.0,
-      "BaseIdleTime": 2.0,
-      "PatrolRange": 5.0,
-      "AbilityCheckInterval": 1.5,
-      "HitsToStun": 3
-    },
-    {
-      "EnemyType": "Tank",
-      "MaxHealth": 100.0,
-      "MoveSpeed": 1.5,
-      "AttackRange": 2.5,
-      "AggroRange": 15.0,
-      "Damage": 15.0,
-      "BaseIdleTime": 2.0,
-      "PatrolRange": 3.0,
-      "AbilityCheckInterval": 3.0,
-      "HitsToStun": 8
-    },
-    {
-      "EnemyType": "Boss",
-      "MaxHealth": 200.0,
-      "MoveSpeed": 2.0,
-      "AttackRange": 10.0,
-      "AggroRange": 25.0,
-      "Damage": 30.0,
       "BaseIdleTime": 1.0,
-      "PatrolRange": 4.0,
-      "AbilityCheckInterval": 2.0,
-      "HitsToStun": 10
+      "PatrolRange": 5.0,
+      "AbilityCheckInterval": 3.0,
+      "HitsToStun": 3,
+      "AngularSpeed": 180.0,
+      "Acceleration": 25.0,
+      "StoppingDistance": 6.0,
+      "BlockDetectionRadius": 5.0,
+      "BlockAngleThreshold": 0.9
     }
   ],
   "Levels": [
@@ -81,16 +107,17 @@
             {
               "EnemyType": "Ranged",
               "Count": 2,
-              "RewardGold": 15
-            },            {
+              "RewardGold": 25
+            },
+            {
               "EnemyType": "Melee",
-              "Count": 2,
-              "RewardGold": 15
+              "Count": 3,
+              "RewardGold": 20
             }
-
           ]
         }
       ]
     }
   ]
 }
+

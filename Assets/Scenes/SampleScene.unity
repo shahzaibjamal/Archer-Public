@@ -772,6 +772,37 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &538483170
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 538483171}
+  m_Layer: 0
+  m_Name: SpawnPoint2 (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &538483171
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 538483170}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6.09, y: 0, z: -9.78}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &717018868
 GameObject:
   m_ObjectHideFlags: 0
@@ -943,7 +974,7 @@ Transform:
   m_GameObject: {fileID: 805346284}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.58, y: 0, z: -9.08}
+  m_LocalPosition: {x: 2.05, y: 0, z: -7.21}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -978,8 +1009,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01889a136b709d547a251fad95e23649, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArrowPoolManager
-  arrowPrefab: {fileID: 6865515575764073118, guid: 69140e06559bac94a8600c90edfa1e81, type: 3}
-  poolSize: 5
+  initialPoolSize: 10
 --- !u!4 &808858371
 Transform:
   m_ObjectHideFlags: 0
@@ -1088,14 +1118,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b82e4138d6120604e97078f93de9ae06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleManager
-  meleePrefab: {fileID: 4402756469435821769, guid: 2e149578bc7dbca4094696e1f499b870, type: 3}
-  rangedPrefab: {fileID: 2740394078279330970, guid: fc5355a53af49e94db9b6ec1a12833a7, type: 3}
-  healerPrefab: {fileID: 2740394078279330970, guid: 05b32b3067093e343a7196bc4d9530ed, type: 3}
-  tankPrefab: {fileID: 2740394078279330970, guid: aad0e894739c65e4eb453391dce5f964, type: 3}
-  bossPrefab: {fileID: 2740394078279330970, guid: 8814d97d170c2f04a90e6adb0daf6eef, type: 3}
   spawnPoints:
   - {fileID: 1309913176}
   - {fileID: 805346285}
+  - {fileID: 1476805030}
+  - {fileID: 538483171}
 --- !u!1 &1072490978
 GameObject:
   m_ObjectHideFlags: 0
@@ -1505,6 +1532,37 @@ Transform:
   - {fileID: 1639443287}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1476805029
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1476805030}
+  m_Layer: 0
+  m_Name: SpawnPoint2 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1476805030
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1476805029}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 9.11, y: 0, z: -14.28}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1639443286
 GameObject:
   m_ObjectHideFlags: 0
@@ -1644,6 +1702,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2048614029}
   - component: {fileID: 2048614028}
+  - component: {fileID: 2048614030}
   m_Layer: 0
   m_Name: Debug
   m_TagString: Untagged
@@ -1678,6 +1737,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2048614030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2048614027}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4115fc5e302295419d7f7607bea8bc2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProgressionUI
 --- !u!1 &2097541710
 GameObject:
   m_ObjectHideFlags: 0
@@ -1947,6 +2018,8 @@ SceneRoots:
   - {fileID: 924003957}
   - {fileID: 1309913176}
   - {fileID: 805346285}
+  - {fileID: 1476805030}
+  - {fileID: 538483171}
   - {fileID: 793509489}
   - {fileID: 1397129214}
   - {fileID: 717018870}

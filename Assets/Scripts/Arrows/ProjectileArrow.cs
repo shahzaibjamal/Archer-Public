@@ -11,9 +11,9 @@ public class ProjectileArrow : BaseArrow
     protected Vector3 _velocity;
     protected bool _isInitialized = false;
 
-    public override void Launch(float speed, float range, Vector3? targetPos = null, bool isEnemyProjectile = false)
+    public override void Launch(float speed, float range, float damageAmount, Vector3? targetPos = null, bool isEnemyProjectile = false)
     {
-        base.Launch(speed, range, targetPos, isEnemyProjectile);
+        base.Launch(speed, range, damageAmount, targetPos, isEnemyProjectile);
 
         if (targetPos.HasValue)
         {

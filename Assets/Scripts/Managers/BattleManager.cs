@@ -5,13 +5,6 @@ public class BattleManager : MonoBehaviour
 {
     public static BattleManager Instance { get; private set; }
 
-    [Header("Enemy Prefabs")]
-    [SerializeField] private GameObject meleePrefab;
-    [SerializeField] private GameObject rangedPrefab;
-    [SerializeField] private GameObject healerPrefab;
-    [SerializeField] private GameObject tankPrefab;
-    [SerializeField] private GameObject bossPrefab;
-
     [Header("Spawning Setup")]
     [SerializeField] private Transform[] spawnPoints;
 
@@ -70,16 +63,12 @@ public class BattleManager : MonoBehaviour
         return bestTarget;
     }
 
-    /// <summary>
-    /// Returns a coordinated world position for an enemy to target based on its type and count.
-    /// This prevents enemies from overlapping at the exact player position.
-    /// </summary>
     public Vector3 GetCombatPosition(Enemy requester, Transform playerTransform, float targetDistance)
     {
         if (playerTransform == null) return requester.transform.position;
 
-        // Group enemies of the same type targeting the player
-        List<Enemy> peers = _activeEnemies.FindAll(e => e.enemyTypeName == requester.enemyTypeName);
+        // Group enemies of the same type targeting the player using Enum comparison
+        List<Enemy> peers = _activeEnemies.FindAll(e => e.enemyType == requester.enemyType);
         int myIndex = peers.IndexOf(requester);
         int totalCount = peers.Count;
 
@@ -88,19 +77,15 @@ public class BattleManager : MonoBehaviour
         Vector3 dirToPlayer = (requester.transform.position - playerTransform.position).normalized;
         if (dirToPlayer == Vector3.zero) dirToPlayer = Vector3.forward;
 
-        // Determine spacing based on enemy type
-        float spreadAngle = requester.enemyTypeName == "Ranged" ? 45f : 35f;
+        float spreadAngle = (requester.enemyType == EnemyType.Ranged || requester.enemyType == EnemyType.Healer) ? 45f : 35f;
         
-        // Calculate the 'offset' index relative to the center (0, -1, 1, -2, 2...)
         float offsetMultiplier = 0;
         if (totalCount > 1)
         {
-            // Center the formation on the player
             float startAngle = -(totalCount - 1) * spreadAngle * 0.5f;
             offsetMultiplier = startAngle + (myIndex * spreadAngle);
         }
 
-        // Rotate the direction to the requester by the calculated offset
         Quaternion rotation = Quaternion.AngleAxis(offsetMultiplier, Vector3.up);
         Vector3 finalDir = rotation * dirToPlayer;
 
@@ -149,19 +134,17 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    private void SpawnEnemy(string typeStr, int reward)
+    private async void SpawnEnemy(EnemyType type, int reward)
     {
-        GameObject prefab = typeStr switch
-        {
-            "Melee" => meleePrefab,
-            "Ranged" => rangedPrefab,
-            "Healer" => healerPrefab,
-            "Tank" => tankPrefab,
-            "Boss" => bossPrefab,
-            _ => meleePrefab
-        };
+        if (AssetLoader.Instance == null || spawnPoints == null || spawnPoints.Length <= 0) return;
 
-        if (prefab != null && spawnPoints != null && spawnPoints.Length > 0)
+        EnemyData stats = DataManager.Instance.GetEnemyStats(type);
+        if (stats == null || string.IsNullOrEmpty(stats.PrefabName)) return;
+
+        string key = stats.PrefabName;
+        GameObject prefab = await AssetLoader.Instance.LoadAsset(key);
+
+        if (prefab != null)
         {
             Transform sp = spawnPoints[Random.Range(0, spawnPoints.Length)];
             GameObject enemyObj = Instantiate(prefab, sp.position, sp.rotation);
@@ -169,7 +152,7 @@ public class BattleManager : MonoBehaviour
             if (enemyObj.TryGetComponent<Enemy>(out var enemy))
             {
                 enemy.SetReward(reward);
-                enemy.enemyTypeName = typeStr;
+                enemy.enemyType = type;
             }
         }
     }
