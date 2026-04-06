@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public class PredictiveBallisticArrow : ProjectileArrow
+public class PredictiveArrow : ProjectileArrow
 {
     [Header("Bokoblin Prediction")]
     [Range(0f, 1f)] public float predictionSkill = 1.0f;

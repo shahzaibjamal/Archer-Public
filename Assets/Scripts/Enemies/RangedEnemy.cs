@@ -39,14 +39,21 @@ public class RangedEnemy : Enemy
         else if (dist > attackRange || !HasLineOfSight())
         {
             // Approach: Move towards player if too far OR if player is behind an obstacle
+            // Fan out using coordinated positions at optimal firing distance
+            Vector3 destination = playerTarget.position;
+            if (BattleManager.Instance != null)
+            {
+                destination = BattleManager.Instance.GetCombatPosition(this, playerTarget, attackRange * 0.9f);
+            }
+
             if (agent != null)
             {
                 agent.isStopped = false;
-                agent.SetDestination(playerTarget.position);
+                agent.SetDestination(destination);
             }
             else
             {
-                transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * Time.deltaTime);
                 transform.LookAt(flatTargetPos);
             }
         }

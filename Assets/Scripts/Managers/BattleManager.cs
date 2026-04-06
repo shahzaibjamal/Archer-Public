@@ -70,6 +70,43 @@ public class BattleManager : MonoBehaviour
         return bestTarget;
     }
 
+    /// <summary>
+    /// Returns a coordinated world position for an enemy to target based on its type and count.
+    /// This prevents enemies from overlapping at the exact player position.
+    /// </summary>
+    public Vector3 GetCombatPosition(Enemy requester, Transform playerTransform, float targetDistance)
+    {
+        if (playerTransform == null) return requester.transform.position;
+
+        // Group enemies of the same type targeting the player
+        List<Enemy> peers = _activeEnemies.FindAll(e => e.enemyTypeName == requester.enemyTypeName);
+        int myIndex = peers.IndexOf(requester);
+        int totalCount = peers.Count;
+
+        if (myIndex == -1) return playerTransform.position;
+
+        Vector3 dirToPlayer = (requester.transform.position - playerTransform.position).normalized;
+        if (dirToPlayer == Vector3.zero) dirToPlayer = Vector3.forward;
+
+        // Determine spacing based on enemy type
+        float spreadAngle = requester.enemyTypeName == "Ranged" ? 45f : 35f;
+        
+        // Calculate the 'offset' index relative to the center (0, -1, 1, -2, 2...)
+        float offsetMultiplier = 0;
+        if (totalCount > 1)
+        {
+            // Center the formation on the player
+            float startAngle = -(totalCount - 1) * spreadAngle * 0.5f;
+            offsetMultiplier = startAngle + (myIndex * spreadAngle);
+        }
+
+        // Rotate the direction to the requester by the calculated offset
+        Quaternion rotation = Quaternion.AngleAxis(offsetMultiplier, Vector3.up);
+        Vector3 finalDir = rotation * dirToPlayer;
+
+        return playerTransform.position + finalDir * targetDistance;
+    }
+
     private void CheckWaveCompletion()
     {
         if (_activeEnemies.Count == 0 && _currentLevel != null)

@@ -43,14 +43,21 @@ public class MeleeEnemy : Enemy
                 }
             }
 
+            // Get coordinated position from BattleManager if available
+            Vector3 destination = playerTarget.position;
+            if (BattleManager.Instance != null)
+            {
+                destination = BattleManager.Instance.GetCombatPosition(this, playerTarget, attackRange * 0.8f);
+            }
+
             if (agent != null)
             {
                 agent.isStopped = false;
-                agent.SetDestination(playerTarget.position);
+                agent.SetDestination(destination);
             }
             else
             {
-                transform.position = Vector3.MoveTowards(transform.position, flatTargetPos, moveSpeed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * Time.deltaTime);
                 transform.LookAt(flatTargetPos);
             }
         }

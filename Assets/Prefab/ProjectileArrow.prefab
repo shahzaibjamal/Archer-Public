@@ -193,7 +193,7 @@ MonoBehaviour:
     m_Bits: 256
   gravityMultiplier: 1
   targetHitHeight: 0.5
-  arcHeight: 3
+  arcHeight: 1
 --- !u!54 &-7137588079163059286
 Rigidbody:
   m_ObjectHideFlags: 0

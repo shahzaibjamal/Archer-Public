@@ -80,9 +80,14 @@
           "EnemySpawns": [
             {
               "EnemyType": "Ranged",
-              "Count": 1,
+              "Count": 2,
+              "RewardGold": 15
+            },            {
+              "EnemyType": "Melee",
+              "Count": 2,
               "RewardGold": 15
             }
+
           ]
         }
       ]
