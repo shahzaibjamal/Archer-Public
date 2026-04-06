@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -39,14 +40,9 @@ public class PlayerController : MonoBehaviour, IDamageable
     public float CurrentHealth => _currentHealth;
     public float MaxHealth => _maxHealth;
 
-    public Vector3 GetMoveInput()
-    {
-        return _moveInput;
-    }
-    public float GetMoveSpeed()
-    {
-        return _moveSpeed;
-    }
+    private Renderer[] _renderers;
+    private MaterialPropertyBlock _propBlock;
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
     private void Awake()
     {
@@ -61,6 +57,8 @@ public class PlayerController : MonoBehaviour, IDamageable
         }
 
         _playerAnim = gameObject.GetComponent<PlayerAnimator>() ?? gameObject.AddComponent<PlayerAnimator>();
+        _renderers = GetComponentsInChildren<Renderer>();
+        _propBlock = new MaterialPropertyBlock();
     }
     private void Start()
     {
@@ -120,6 +118,15 @@ public class PlayerController : MonoBehaviour, IDamageable
         UpdateTargeting();
         Move();
         AutoAttack();
+    }
+
+    public Vector3 GetMoveInput()
+    {
+        return _moveInput;
+    }
+    public float GetMoveSpeed()
+    {
+        return _moveSpeed;
     }
 
     private void AutoAttack()
@@ -354,6 +361,23 @@ public class PlayerController : MonoBehaviour, IDamageable
         if (_currentHealth <= 0)
         {
             Die();
+        }
+        else
+        {
+            ApplyColor(Color.red);
+            DOTween.To(() => Color.red, x => ApplyColor(x), Color.white, 0.2f)
+                .SetEase(Ease.InQuad);
+        }
+    }
+
+    private void ApplyColor(Color color)
+    {
+        foreach (var r in _renderers)
+        {
+            // We use GetPropertyBlock to avoid creating a new Material Instance
+            r.GetPropertyBlock(_propBlock);
+            _propBlock.SetColor(BaseColorId, color);
+            r.SetPropertyBlock(_propBlock);
         }
     }
 

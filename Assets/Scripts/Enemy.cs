@@ -2,6 +2,7 @@ using System;
 using UnityEngine.AI;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using DG.Tweening;
 
 public enum EnemyState { Idle, Patrol, Combat, UsingAbility, Hit, Stunned, Attacking, Block, Taunt, Dead, Victory }
 
@@ -59,6 +60,16 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     public Animator EnemyAnimator => animator;
     public Action<float, float> OnHealthChanged;
     public string enemyTypeName = "Melee";
+
+    private Renderer[] _renderers;
+    private MaterialPropertyBlock _propBlock;
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+
+    protected virtual void Awake()
+    {
+        _renderers = GetComponentsInChildren<Renderer>();
+        _propBlock = new MaterialPropertyBlock();
+    }
 
     protected virtual void Start()
     {
@@ -404,6 +415,9 @@ public abstract class Enemy : MonoBehaviour, IDamageable
             }
 
             OnHitVFXStub();
+            ApplyColor(Color.red);
+            DOTween.To(() => Color.red, x => ApplyColor(x), Color.white, 0.2f)
+                .SetEase(Ease.InQuad);
         }
         else
         {
@@ -417,6 +431,18 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         // Insert Particle Systems or Blood Splatters here!
         // Debug.Log($"Spawned Hit VFX on {name}"); // Natively stubbed out for later FX integrations
     }
+
+    private void ApplyColor(Color color)
+    {
+        foreach (var r in _renderers)
+        {
+            // We use GetPropertyBlock to avoid creating a new Material Instance
+            r.GetPropertyBlock(_propBlock);
+            _propBlock.SetColor(BaseColorId, color);
+            r.SetPropertyBlock(_propBlock);
+        }
+    }
+
 
     public virtual void Heal(float amount)
     {

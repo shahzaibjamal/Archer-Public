@@ -17,30 +17,7 @@ public class ProjectileArrow : BaseArrow
 
         if (targetPos.HasValue)
         {
-            Vector3 start = transform.position;
-            Vector3 target = new Vector3(targetPos.Value.x, targetPos.Value.y + targetHitHeight, targetPos.Value.z);
-
-            float g = Mathf.Abs(Physics.gravity.y) * gravityMultiplier;
-            if (g < 0.1f) g = 0.1f; // Prevent div by zero
-
-            // Ensure we always have an upward arc by picking a peak height above both shooter and target
-            float h = Mathf.Max(start.y, target.y) + arcHeight;
-            
-            // v0y = sqrt(2 * g * (h - y0))
-            float v0y = Mathf.Sqrt(2 * g * Mathf.Max(0.1f, h - start.y));
-            
-            // Time to reach peak + time from peak to target
-            float timeToPeak = v0y / g;
-            float timeFromPeak = Mathf.Sqrt(2 * g * Mathf.Max(0.1f, h - target.y)) / g;
-            float totalTime = timeToPeak + timeFromPeak;
-
-            Vector3 diff = new Vector3(target.x - start.x, 0, target.z - start.z);
-            float horizontalDist = diff.magnitude;
-
-            // Horizontal speed is derived from totalTime to hit the spot
-            float horizontalSpeed = horizontalDist / totalTime;
-            
-            _velocity = (diff.normalized * horizontalSpeed) + Vector3.up * v0y;
+            _velocity = GetBallisticVelocity(transform.position, targetPos.Value, out _);
         }
         else
         {
@@ -53,18 +30,38 @@ public class ProjectileArrow : BaseArrow
         _isInitialized = true;
     }
 
-    private void Update()
+    protected Vector3 GetBallisticVelocity(Vector3 start, Vector3 end, out float flightTime)
+    {
+        Vector3 target = new Vector3(end.x, end.y + targetHitHeight, end.z);
+        float g = Mathf.Abs(Physics.gravity.y) * gravityMultiplier;
+        if (g < 0.1f) g = 0.1f;
+
+        float h = Mathf.Max(start.y, target.y) + arcHeight;
+        float v0y = Mathf.Sqrt(2 * g * Mathf.Max(0.1f, h - start.y));
+
+        float timeToPeak = v0y / g;
+        float timeFromPeak = Mathf.Sqrt(2 * g * Mathf.Max(0.1f, h - target.y)) / g;
+        flightTime = timeToPeak + timeFromPeak;
+
+        Vector3 diff = new Vector3(target.x - start.x, 0, target.z - start.z);
+        float horizontalDist = diff.magnitude;
+        float horizontalSpeed = flightTime > 0.01f ? horizontalDist / flightTime : 0f;
+
+        return (diff.normalized * horizontalSpeed) + Vector3.up * v0y;
+    }
+
+    protected virtual void Update()
     {
         if (!_isInitialized) return;
 
         _velocity += Physics.gravity * gravityMultiplier * Time.deltaTime;
         transform.position += _velocity * Time.deltaTime;
 
-        if (_velocity != Vector3.zero)
+        if (_velocity.sqrMagnitude > 0.001f)
             transform.rotation = Quaternion.LookRotation(_velocity);
     }
 
-    private void OnTriggerEnter(Collider other)
+    protected virtual void OnTriggerEnter(Collider other)
     {
         if (IsValidHit(other, out var damageable))
         {
