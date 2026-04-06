@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.AI;
@@ -27,10 +28,10 @@ public class PlayerController : MonoBehaviour, IDamageable
     [SerializeField] private float _loseTargetRadius = 15f;
     [SerializeField] private float _meleeRadius = 2f;
     [SerializeField, Range(0.1f, 3f)] private float _attackInterval = 1f;
-    [SerializeField, Range(0f, 1f)] private float _cooldown = 0.2f; 
-    [SerializeField, Range(0f, 1.5f)] private float _rangedFireTime = 0.4f; 
-    [SerializeField] private float _rangedAnimClipDuration = 1f; 
-    [SerializeField] private float _meleeAnimClipDuration = 1f; 
+    [SerializeField, Range(0f, 1f)] private float _cooldown = 0.2f;
+    [SerializeField, Range(0f, 1.5f)] private float _rangedFireTime = 0.4f;
+    [SerializeField] private float _rangedAnimClipDuration = 1f;
+    [SerializeField] private float _meleeAnimClipDuration = 1f;
     private float _attackTimer;
     private float _directionParam = 1f;
     private bool _hasFiredInCurrentCycle = true;
@@ -42,6 +43,8 @@ public class PlayerController : MonoBehaviour, IDamageable
     private float _attackBuffMultiplier = 1f;
     private float _defenseBuffMultiplier = 1f;
     private float _enemyDefenseDebuff = 1f;
+    private float _speedMultiplier = 1f;
+    private List<float> _activeSlows = new List<float>();
 
     // Arsenal & Special Shot
     private ArrowType? _queuedSpecialArrow = null;
@@ -63,7 +66,7 @@ public class PlayerController : MonoBehaviour, IDamageable
         _agent = GetComponent<NavMeshAgent>();
         if (_agent != null)
         {
-            _agent.updateRotation = false; 
+            _agent.updateRotation = false;
             _agent.updateUpAxis = false;
         }
 
@@ -99,7 +102,7 @@ public class PlayerController : MonoBehaviour, IDamageable
         GameEvents.PowerUpActivated -= ActivatePowerUp;
     }
 
-    public void RefreshStats()
+    public virtual void RefreshStats()
     {
         if (DataManager.Instance == null || DataManager.Instance.GameState == null) return;
         var gs = DataManager.Instance.GameState;
@@ -112,7 +115,7 @@ public class PlayerController : MonoBehaviour, IDamageable
 
         if (_agent != null)
         {
-            _agent.speed = _moveSpeed;
+            _agent.speed = _moveSpeed * _speedMultiplier;
             _agent.angularSpeed = _rotationSpeed * 50f;
         }
         OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
@@ -130,7 +133,7 @@ public class PlayerController : MonoBehaviour, IDamageable
         var pData = DataManager.Instance.Metadata.PlayerStats;
 
         if (gs.GetPowerUpCount(type) <= 0) return;
-        
+
         gs.UsePowerUp(type);
         DataManager.Instance.SaveGameState();
 
@@ -174,7 +177,7 @@ public class PlayerController : MonoBehaviour, IDamageable
     {
         _attackBuffMultiplier = multiplier;
         // Simple visual feedback: slightly reddish
-        ApplyColor(new Color(1f, 0.5f, 0.5f)); 
+        ApplyColor(new Color(1f, 0.5f, 0.5f));
         yield return new WaitForSeconds(duration);
         _attackBuffMultiplier = 1f;
         ApplyColor(Color.white);
@@ -216,7 +219,21 @@ public class PlayerController : MonoBehaviour, IDamageable
     }
 
     public Vector3 GetMoveInput() => _moveInput;
-    public float GetMoveSpeed() => _moveSpeed;
+    public float GetMoveSpeed() => _moveSpeed * _speedMultiplier;
+
+    public void SetSpeedMultiplier(float multiplier, bool apply)
+    {
+        if (apply) _activeSlows.Add(multiplier);
+        else _activeSlows.Remove(multiplier);
+
+        _speedMultiplier = 1f;
+        foreach (float s in _activeSlows)
+        {
+            if (s < _speedMultiplier) _speedMultiplier = s; // Take the strongest slow
+        }
+
+        if (_agent != null) _agent.speed = _moveSpeed * _speedMultiplier;
+    }
 
     private void AutoAttack()
     {
@@ -255,7 +272,7 @@ public class PlayerController : MonoBehaviour, IDamageable
 
                 float currentDmg = (DataManager.Instance?.GameState.CurrentDamage ?? 10f) * _attackBuffMultiplier * _enemyDefenseDebuff;
                 ArrowPoolManager.Instance.FireArrow(launchType, fp.position, fp.rotation, calculatedArrowSpeed, _lockOnRadius, currentDmg, tgtPos, false);
-                
+
                 _queuedSpecialArrow = null;
                 _nextAttackIsSpecial = false;
             }
@@ -379,11 +396,11 @@ public class PlayerController : MonoBehaviour, IDamageable
 
         if (_agent != null && _agent.enabled)
         {
-            _agent.Move(move * Time.deltaTime * _moveSpeed);
+            _agent.Move(move * Time.deltaTime * _moveSpeed * _speedMultiplier);
         }
         else if (_controller != null)
         {
-            _controller.Move(move * Time.deltaTime * _moveSpeed);
+            _controller.Move(move * Time.deltaTime * _moveSpeed * _speedMultiplier);
         }
 
         float animSpeed = _moveInput.magnitude;

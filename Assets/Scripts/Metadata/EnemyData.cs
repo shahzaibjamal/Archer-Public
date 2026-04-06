@@ -3,6 +3,7 @@ public class EnemyData
 {
     public EnemyType EnemyType;
     public string PrefabName;
+    public int Level;
     public float MaxHealth;
     public float MoveSpeed;
     public float AttackRange;

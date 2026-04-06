@@ -21,6 +21,11 @@ public class GameplayUI : MonoBehaviour
     [Header("Special Arsenal")]
     public Button firePiercingBtn;
 
+
+    public Button MenuBtn;
+    public GameObject MenuPanel;
+    private bool _isMenuOpen = false;
+
     private void Start()
     {
         // Bind Upgrades
@@ -39,5 +44,13 @@ public class GameplayUI : MonoBehaviour
 
         // Bind Special
         firePiercingBtn?.onClick.AddListener(() => GameEvents.TriggerSpecialArrow(ArrowType.Piercing));
+        MenuBtn?.onClick.AddListener(ShowMenu);
+
+    }
+
+    private void ShowMenu()
+    {
+        _isMenuOpen = !_isMenuOpen;
+        MenuPanel.SetActive(_isMenuOpen);
     }
 }

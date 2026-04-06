@@ -57,7 +57,7 @@ public class MeleeEnemy : Enemy
             }
             else
             {
-                transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * speedMultiplier * Time.deltaTime);
                 transform.LookAt(flatTargetPos);
             }
         }

@@ -32,7 +32,7 @@ public class RangedEnemy : Enemy
             }
             else
             {
-                transform.position = Vector3.MoveTowards(transform.position, fleeTarget, moveSpeed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, fleeTarget, moveSpeed * speedMultiplier * Time.deltaTime);
             }
             transform.LookAt(new Vector3(fleeTarget.x, transform.position.y, fleeTarget.z));
         }
@@ -53,7 +53,7 @@ public class RangedEnemy : Enemy
             }
             else
             {
-                transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * speedMultiplier * Time.deltaTime);
                 transform.LookAt(flatTargetPos);
             }
         }

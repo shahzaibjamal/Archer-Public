@@ -3,6 +3,7 @@ using UnityEngine.AI;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using DG.Tweening;
+using System.Collections.Generic;
 
 public enum EnemyState { Idle, Patrol, Combat, UsingAbility, Hit, Stunned, Attacking, Block, Taunt, Dead, Victory }
 
@@ -39,7 +40,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     [SerializeField] protected float blockAngleThreshold = 0.85f;
     [SerializeField] protected float blockDuration = 1f;
     [SerializeField] protected float blockCooldown = 3f;
-    [SerializeField] protected float incomingDetectionSqrRange = 64f; 
+    [SerializeField] protected float incomingDetectionSqrRange = 64f;
 
     [Header("Movement Settings")]
     [SerializeField] protected float angularSpeed = 120f;
@@ -51,7 +52,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     [SerializeField] protected float deathDuration = 3f;
     [SerializeField] protected float fireCheckHeight = 1.5f;
     [SerializeField] protected bool useInstantDamageAnim = true; // Set to false to see previous "queued" behavior
-    
+
     protected float blockCooldownTimer;
     protected EnemyState currentState = EnemyState.Idle;
     protected float stateTimer;
@@ -61,6 +62,9 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     private EnemyAbility[] equippedAbilities;
     protected EnemyAbility activeAbility;
     protected int rewardGold;
+    protected int enemyLevel;
+    protected float speedMultiplier = 1f;
+    protected List<float> activeSlows = new List<float>();
     private Vector3 _lastPosition;
     private int _hitsTaken = 0;
 
@@ -87,11 +91,12 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         _lastPosition = transform.position;
 
-        if (DataManager.Instance != null)
+        if (DataManager.Instance != null && DataManager.Instance.Metadata != null)
         {
             var stats = DataManager.Instance.GetEnemyStats(enemyType);
             if (stats != null)
             {
+                enemyLevel = stats.Level;
                 if (stats.MaxHealth > 0) maxHealth = stats.MaxHealth;
                 if (stats.MoveSpeed > 0) moveSpeed = stats.MoveSpeed;
                 if (stats.AttackRange > 0) attackRange = stats.AttackRange;
@@ -102,31 +107,32 @@ public abstract class Enemy : MonoBehaviour, IDamageable
                 if (stats.AbilityCheckInterval > 0) abilityCheckInterval = stats.AbilityCheckInterval;
                 if (stats.HitsToStun > 0) hitsToStun = stats.HitsToStun;
 
-                // Sync new NavMesh settings
+                // NavMeshAgent Settings
                 if (stats.AngularSpeed > 0) angularSpeed = stats.AngularSpeed;
                 if (stats.Acceleration > 0) acceleration = stats.Acceleration;
                 if (stats.StoppingDistance > 0) stoppingDistance = stats.StoppingDistance;
 
                 // Sync block detection
-                if (stats.BlockDetectionRadius > 0) 
+                if (stats.BlockDetectionRadius > 0)
                 {
                     blockDetectionRadius = stats.BlockDetectionRadius;
                     incomingDetectionSqrRange = blockDetectionRadius * blockDetectionRadius;
                 }
                 if (stats.BlockAngleThreshold > 0) blockAngleThreshold = stats.BlockAngleThreshold;
+
+                // NEW: Sync NavMesh Mask
+                currentHealth = maxHealth;
+                equippedAbilities = GetComponents<EnemyAbility>();
+                agent = GetComponent<NavMeshAgent>();
+
+                if (agent != null)
+                {
+                    agent.speed = moveSpeed * speedMultiplier;
+                    agent.angularSpeed = angularSpeed;
+                    agent.acceleration = acceleration;
+                    agent.stoppingDistance = stoppingDistance;
+                }
             }
-        }
-
-        currentHealth = maxHealth;
-        equippedAbilities = GetComponents<EnemyAbility>();
-        agent = GetComponent<NavMeshAgent>();
-
-        if (agent != null)
-        {
-            agent.speed = moveSpeed;
-            agent.angularSpeed = angularSpeed;
-            agent.acceleration = acceleration;
-            agent.stoppingDistance = stoppingDistance;
         }
 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -164,6 +170,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         if (animator != null) animator.SetFloat("Speed", currentSpeed);
 
         UpdateCooldowns();
+        if (currentHealth > 0) CheckForIncomingArrows();
 
         switch (currentState)
         {
@@ -181,23 +188,49 @@ public abstract class Enemy : MonoBehaviour, IDamageable
 
     protected virtual void CheckForIncomingAttacks()
     {
-        if (blockCooldownTimer > 0) return;
-        if (ArrowPoolManager.Instance == null) return;
+        // Handled by CheckForIncomingArrows but keeping for specific block logic if needed
+    }
+
+    protected virtual void CheckForIncomingArrows()
+    {
+        if (ArrowPoolManager.Instance == null || currentState == EnemyState.Dead) return;
 
         foreach (var arrow in ArrowPoolManager.Instance.ActiveArrows)
         {
             if (arrow == null || arrow.IsEnemyProjectile) continue;
 
             Vector3 toEnemy = transform.position - arrow.transform.position;
-            if (toEnemy.sqrMagnitude < incomingDetectionSqrRange)
+            float distSqr = toEnemy.sqrMagnitude;
+
+            // Reactive sensing within 6 meters
+            if (distSqr < 36f)
             {
-                if (Vector3.Dot(arrow.transform.forward, toEnemy.normalized) > blockAngleThreshold)
+                // Check if arrow is heading generally towards us
+                Vector3 arrowVel = arrow.transform.forward;
+                float dot = Vector3.Dot(arrowVel, toEnemy.normalized);
+
+                if (dot > 0.8f) // Heading straight at us
                 {
-                    blockCooldownTimer = blockCooldown;
-                    if (animator != null) animator.SetTrigger("Block");
-                    ChangeState(EnemyState.Block);
+                    TryReactiveDodge();
                     return;
                 }
+            }
+        }
+    }
+
+    private void TryReactiveDodge()
+    {
+        if (currentState == EnemyState.UsingAbility || currentState == EnemyState.Attacking || currentState == EnemyState.Stunned) return;
+
+        foreach (var ability in GetComponents<EnemyAbility>())
+        {
+            if (ability is DodgeAbility dodge && dodge.IsReady())
+            {
+                // Force triggering the dodge
+                activeAbility = dodge;
+                dodge.ExecuteOnStart(this);
+                ChangeState(EnemyState.UsingAbility);
+                return;
             }
         }
     }
@@ -284,7 +317,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
             float dist = Vector3.Distance(transform.position, patrolTargetPos);
             if (dist > stoppingDistance)
             {
-                transform.position = Vector3.MoveTowards(transform.position, patrolTargetPos, moveSpeed * patrolSpeedMultiplier * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, patrolTargetPos, moveSpeed * speedMultiplier * patrolSpeedMultiplier * Time.deltaTime);
                 transform.LookAt(new Vector3(patrolTargetPos.x, transform.position.y, patrolTargetPos.z));
             }
             else
@@ -406,6 +439,22 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         if (highlightObject != null)
             highlightObject.SetActive(isHighlighted);
+    }
+
+    public Transform GetPlayerTarget() => playerTarget;
+    public int GetEnemyLevel() => enemyLevel;
+    public void SetSpeedMultiplier(float multiplier, bool apply)
+    {
+        if (apply) activeSlows.Add(multiplier);
+        else activeSlows.Remove(multiplier);
+
+        speedMultiplier = 1f;
+        foreach (float s in activeSlows)
+        {
+            if (s < speedMultiplier) speedMultiplier = s; // Take strongest slow
+        }
+
+        if (agent != null) agent.speed = moveSpeed * speedMultiplier;
     }
 
     protected abstract void BehaviorUpdate();

@@ -66,29 +66,42 @@ public class BattleManager : MonoBehaviour
     public Vector3 GetCombatPosition(Enemy requester, Transform playerTransform, float targetDistance)
     {
         if (playerTransform == null) return requester.transform.position;
-
-        // Group enemies of the same type targeting the player using Enum comparison
+    
         List<Enemy> peers = _activeEnemies.FindAll(e => e.enemyType == requester.enemyType);
         int myIndex = peers.IndexOf(requester);
         int totalCount = peers.Count;
-
+    
         if (myIndex == -1) return playerTransform.position;
-
+    
         Vector3 dirToPlayer = (requester.transform.position - playerTransform.position).normalized;
         if (dirToPlayer == Vector3.zero) dirToPlayer = Vector3.forward;
-
-        float spreadAngle = (requester.enemyType == EnemyType.Ranged || requester.enemyType == EnemyType.Healer) ? 45f : 35f;
-        
-        float offsetMultiplier = 0;
-        if (totalCount > 1)
+    
+        float offsetAngle = 0;
+    
+        if (requester.enemyType == EnemyType.Melee)
         {
-            float startAngle = -(totalCount - 1) * spreadAngle * 0.5f;
-            offsetMultiplier = startAngle + (myIndex * spreadAngle);
+            // Flanking Logic: spread them around the player widely
+            // We'll use a range of 60 to 120 degrees depending on the index
+            float baseAngle = 70f;
+            float side = (myIndex % 2 == 0) ? 1f : -1f;
+            int pairIndex = myIndex / 2;
+            
+            offsetAngle = side * (baseAngle + (pairIndex * 35f));
         }
-
-        Quaternion rotation = Quaternion.AngleAxis(offsetMultiplier, Vector3.up);
+        else
+        {
+            // Ranged/Healer: standard front-fanning
+            float spreadAngle = (requester.enemyType == EnemyType.Ranged || requester.enemyType == EnemyType.Healer) ? 45f : 35f;
+            if (totalCount > 1)
+            {
+                float startAngle = -(totalCount - 1) * spreadAngle * 0.5f;
+                offsetAngle = startAngle + (myIndex * spreadAngle);
+            }
+        }
+    
+        Quaternion rotation = Quaternion.AngleAxis(offsetAngle, Vector3.up);
         Vector3 finalDir = rotation * dirToPlayer;
-
+    
         return playerTransform.position + finalDir * targetDistance;
     }
 

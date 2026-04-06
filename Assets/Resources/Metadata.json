@@ -45,6 +45,7 @@
     {
       "EnemyType": "Melee",
       "PrefabName": "MeleeEnemy",
+      "Level": 1,
       "MaxHealth": 3500.0,
       "MoveSpeed": 3.5,
       "AttackRange": 2.0,
@@ -63,6 +64,7 @@
     {
       "EnemyType": "Ranged",
       "PrefabName": "RangedEnemy",
+      "Level": 1,
       "MaxHealth": 2500.0,
       "MoveSpeed": 2.5,
       "AttackRange": 12.0,
@@ -81,7 +83,8 @@
     {
       "EnemyType": "Healer",
       "PrefabName": "HealerEnemy",
-      "MaxHealth": 30.0,
+      "Level": 1,
+      "MaxHealth": 800.0,
       "MoveSpeed": 4.0,
       "AttackRange": 8.0,
       "AggroRange": 15.0,
@@ -95,6 +98,35 @@
       "StoppingDistance": 6.0,
       "BlockDetectionRadius": 5.0,
       "BlockAngleThreshold": 0.9
+    }
+  ],
+  "Throwables": [
+    {
+      "Type": "Poison",
+      "MinLevel": 2,
+      "Duration": 5.0,
+      "EffectRadius": 4.0,
+      "DamagePerSecond": 10.0,
+      "SlowMultiplier": 0.6,
+      "BlocksEnemies": false
+    },
+    {
+      "Type": "Frozen",
+      "MinLevel": 2,
+      "Duration": 4.0,
+      "EffectRadius": 3.0,
+      "DamagePerSecond": 5.0,
+      "SlowMultiplier": 0.2,
+      "BlocksEnemies": false
+    },
+    {
+      "Type": "Block",
+      "MinLevel": 1,
+      "Duration": 8.0,
+      "EffectRadius": 2.0,
+      "DamagePerSecond": 0.0,
+      "SlowMultiplier": 1.0,
+      "BlocksEnemies": false
     }
   ],
   "Levels": [

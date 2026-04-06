@@ -227,6 +227,7 @@ GameObject:
   - component: {fileID: 6729773312740056231}
   - component: {fileID: 3766137396570077148}
   - component: {fileID: -5307344396085424313}
+  - component: {fileID: 8720762014664100027}
   m_Layer: 6
   m_Name: MeleeEnemy
   m_TagString: Untagged
@@ -356,17 +357,26 @@ MonoBehaviour:
   baseIdleTime: 2
   patrolRange: 5
   abilityCheckInterval: 1.5
+  patrolSpeedMultiplier: 0.5
   hitStunDuration: 0.5
   stunDuration: 2
   hitsToStun: 3
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 512
+  blockDetectionRadius: 8
+  blockAngleThreshold: 0.85
   blockDuration: 1
   blockCooldown: 3
+  incomingDetectionSqrRange: 64
+  angularSpeed: 120
+  acceleration: 20
+  stoppingDistance: 0.1
   tauntDuration: 2
   deathDuration: 3
-  enemyTypeName: Melee
+  fireCheckHeight: 1.5
+  useInstantDamageAnim: 1
+  enemyType: 0
   attackCooldown: 1.5
   attackHitDelay: 0.5
   tauntCooldown: 6
@@ -420,6 +430,23 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &8720762014664100027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4402756469435821769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccd06055ab2566140838bf1d73004524, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowAbility
+  cooldown: 2
+  chanceToTrigger: 0.5
+  executionDuration: 1
+  throwRange: 12
+  throwHitDelay: 0.5
 --- !u!1 &7802498949143041916
 GameObject:
   m_ObjectHideFlags: 0
