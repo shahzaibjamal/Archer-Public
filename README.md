@@ -5,9 +5,8 @@
 
 A technical prototype for a top-down, rogue-like combat system built with **Unity URP**. This project serves as a showcase for advanced AI behaviors, agentic development workflows, and a strictly decoupled architecture optimized for low-end mobile performance.
 
-<img width="250" alt="archer_01" src="https://github.com/user-attachments/assets/2667a58b-47cb-4805-be4e-cc545fb17eff" />
-<img width="250" alt="archer_02" src="https://github.com/user-attachments/assets/2078f10a-aa20-4771-9e7d-e76efd9b4d1d" />
-
+<img width="250" alt="archer_01" src="https://github.com/user-attachments/assets/758c8215-5cfe-4302-bdb5-8f8017c38d97" />
+<img width="250" alt="archer_02" src="https://github.com/user-attachments/assets/c28d4279-31d7-407d-a8a2-012977e44c25" />
 
 ---
 
