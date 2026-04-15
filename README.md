@@ -34,7 +34,7 @@ The project is built using a "Code-First" approach with an emphasis on modularit
 This project leverages cutting-edge AI techniques to create a challenging and "human-like" combat experience:
 
 * **Predictive Projectiles:** Enemy AI doesn't just fire at the player's current position; it calculates the player's velocity to "lead" shots and intercept movement.
-* **NavMesh & Obstacle Avoidance:** Enemies utilize advanced **NavMesh Layers** combined with **Anti-Gravity** logic and obstacle avoidance to navigate complex 3D environments fluidly.
+* **NavMesh & Obstacle Avoidance:** Enemies utilize advanced **NavMesh Layers** and obstacle avoidance to navigate complex 3D environments fluidly.
 * **Agentic Prototyping:** Development speed is significantly increased through **Agentic Programming** workflows, using AI agents to rapidly iterate on enemy behavior trees and balance metadata.
 
 ---
